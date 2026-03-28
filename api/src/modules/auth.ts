@@ -6,8 +6,6 @@ import { desc, eq } from "drizzle-orm";
 
 export const authModule = (app: Elysia) => app.group('/auth', (group) => group
   .use(jwt({ name: 'jwt', secret: process.env.JWT_SECRET || 'super-secret-key' }))
-  
-
   .post("/login", async ({ body, set, jwt }: any) => {
     try {
       const { email, password } = body;

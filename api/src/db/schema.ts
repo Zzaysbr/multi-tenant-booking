@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, timestamp, integer, pgEnum, text } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, timestamp, integer, pgEnum, text, boolean } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("role", ["ADMIN", "OWNER", "STAFF", "CUSTOMER"]);
 export const bookingStatusEnum = pgEnum("booking_status", ["pending", "confirmed", "canceled", "completed"]);
@@ -11,7 +11,9 @@ export const tenants = pgTable("tenants", {
   phone: varchar("phone", { length: 20 }),
   address: text("address"),
   qrCodeUrl: text("qr_code_url"),
+  line_bot_id: varchar("line_bot_id", { length: 50 }),
   line_channel_token: text("line_channel_token"),
+  line_user_id: text("line_user_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -44,12 +46,13 @@ export const services = pgTable("services", {
 export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
   tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
-  customerId: integer("customer_id").references(() => users.id).notNull(),
-  staffId: integer("staff_id").references(() => staffs.id).notNull(),
+  customerId: integer("customer_id"),
+  guestName: varchar("guest_name", { length: 255 }),
   serviceId: integer("service_id").references(() => services.id).notNull(),
-  status: bookingStatusEnum("status").default("pending").notNull(),
+  staffId: integer("staff_id").references(() => staffs.id).notNull(),
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
+  status: bookingStatusEnum("status").default("pending").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -60,4 +63,13 @@ export const payments = pgTable("payments", {
   slipUrl: text("slip_url"),
   status: paymentStatusEnum("status").default("pending").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const businessHours = pgTable("business_hours", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id),
+  dayOfWeek: integer("day_of_week").notNull(), // 0-6
+  openTime: varchar("open_time", { length: 8 }).default("09:00"),
+  closeTime: varchar("close_time", { length: 8 }).default("20:00"),
+  isClosed: boolean("is_closed").default(false),
 });

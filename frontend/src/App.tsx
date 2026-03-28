@@ -16,6 +16,7 @@ import BookingPage from './pages/customer/BookingPage';
 import HomePage from './pages/customer/HomePage';
 import MyBookingsPage from './pages/customer/MyBookingsPage';
 import PaymentPage from './pages/customer/PaymentPage';
+import QueueBoard from './pages/customer/QueueBoard';
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
         <Route path="/:tenantPath" element={<BookingPage />} />
         <Route path='/:tenantPath/my-bookings' element={<MyBookingsPage />}/>
         <Route path='/:tenantPath/pay/:bookingId' element={<PaymentPage />}/> 
+        <Route path='/:tenantPath/queue' element={<QueueBoard />}/>
         
         {/* --- 404 Redirect --- */}
         <Route path="*" element={<Navigate to="/" replace />} />

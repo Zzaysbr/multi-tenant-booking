@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import { toast } from 'sonner';
-import { Check, X, Eye, Clock, User, Scissors, Landmark, Loader2 } from 'lucide-react';
+import { Check, X, Eye, Clock, User, Landmark} from 'lucide-react';
 
 export default function ApprovalsPage() {
   const [approvals, setApprovals] = useState<any[]>([]);

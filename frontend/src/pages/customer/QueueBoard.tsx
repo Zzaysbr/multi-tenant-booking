@@ -1,19 +1,28 @@
+// src/pages/customer/QueueBoard.tsx
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../api/axios';
-import { Users, PlayCircle, Clock, Loader2, Calendar } from 'lucide-react';
+import { 
+  Users, Clock, PlayCircle, CheckCircle2, 
+  Loader2, Sparkles, Coffee, ArrowRightCircle
+} from 'lucide-react';
 
 export default function QueueBoard() {
   const { tenantPath } = useParams();
-  const [queues, setQueues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [queues, setQueues] = useState<any>({ serving: [], waiting: [] });
 
+  //  ดึงข้อมูลคิว (แนะนำให้ตั้ง Interval เพื่อให้มัน Auto-refresh เหมือนจอทีวี)
   const fetchQueue = async () => {
     try {
-      const res = await api.get(`/api/${tenantPath}/queue-board`);
-      setQueues(res.data.queue || []);
+      // หมายเหตุ: พี่ต้องมีขา /api/${tenantPath}/queue ใน Backend นะครับ
+      const res = await api.get(`/api/${tenantPath}/bookings/queue`);
+      setQueues({
+        serving: res.data.serving || [], // คิวที่สถานะ 'confirmed' (กำลังให้บริการ)
+        waiting: res.data.waiting || []  // คิวที่สถานะ 'pending' (รอรับบริการ)
+      });
     } catch (err) {
-      console.error("Queue fetch error", err);
+      console.error("Queue Load Error:", err);
     } finally {
       setLoading(false);
     }
@@ -21,115 +30,120 @@ export default function QueueBoard() {
 
   useEffect(() => {
     fetchQueue();
-    const interval = setInterval(fetchQueue, 30000);
+    const interval = setInterval(fetchQueue, 30000); // รีเฟรชทุก 30 วินาที
     return () => clearInterval(interval);
   }, [tenantPath]);
 
-  const current = queues.filter(q => q.status === 'confirmed').slice(0, 1);
-  const upNext = queues.filter(q => q.status === 'confirmed').slice(1, 5);
-  const waitingForPayment = queues.filter(q => q.status === 'pending');
-
   if (loading) return (
-    <div className="h-screen bg-[#FDFCFB] flex flex-col items-center justify-center text-accent animate-pulse">
+    <div className="h-screen bg-primary flex flex-col items-center justify-center text-white font-sans animate-pulse">
       <Loader2 className="animate-spin mb-4" size={48} />
-      <p className="font-bold tracking-widest uppercase text-xs">Loading Live Queue...</p>
+      <p className="font-black text-xs uppercase tracking-[0.5em]">Syncing Live Queue...</p>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] p-8 md:p-16 font-sans text-secondary-foreground overflow-hidden">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16">
-        
-        {/* --- 🟢 ฝั่งซ้าย: Now Serving (คิวที่กำลังให้บริการ) --- */}
-        <div className="space-y-12">
-          <header className="space-y-2">
-            <h1 className="text-6xl font-black tracking-tighter text-primary leading-none">
-              COZY<br/>SERVING
-            </h1>
-            <p className="text-accent font-medium text-lg italic">ขณะนี้ร้านกำลังให้บริการลูกค้าลำดับนี้ครับ</p>
-          </header>
-
-          {current.length > 0 ? (
-            current.map(q => (
-              <div key={q.id} className="bg-white rounded-[60px] p-16 shadow-2xl shadow-primary/10 border border-primary/5 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full transition-transform group-hover:scale-110" />
-                
-                <p className="text-[12px] font-black uppercase tracking-[0.4em] text-primary/60 mb-6 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
-                  In Progress
-                </p>
-                
-                <h2 className="text-8xl font-black text-secondary-foreground break-words">
-                  {q.customerName.split(' ')[0]} {/* แสดงเฉพาะชื่อเล่น/ชื่อแรก */}
-                </h2>
-                
-                <div className="mt-12 flex items-center gap-4 text-primary bg-primary/5 w-fit px-8 py-4 rounded-3xl border border-primary/10">
-                  <PlayCircle size={32} />
-                  <span className="text-2xl font-black">{q.serviceName}</span>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="bg-stone-100 rounded-[60px] p-32 text-center flex flex-col items-center justify-center gap-4">
-              <Calendar className="text-stone-300" size={64} />
-              <p className="italic text-stone-400 font-bold text-xl">ไม่มีคิวที่กำลังรับบริการในขณะนี้</p>
+    <div className="min-h-screen bg-bg font-sans text-secondary-foreground pb-20 No Italic">
+      
+      {/* --- ☕️ Header Section --- */}
+      <header className="bg-primary text-white py-12 px-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12"><Coffee size={120} /></div>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
+          <div className="text-center md:text-left space-y-2">
+            <div className="flex items-center justify-center md:justify-start gap-2">
+              <Sparkles size={18} className="text-accent" />
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-accent">Live Status</span>
             </div>
-          )}
+            <h1 className="text-5xl font-black tracking-tighter uppercase leading-none">{tenantPath} Queue Board</h1>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md px-8 py-4 rounded-[24px] border border-white/10 text-center">
+             <p className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1 text-accent">Current Time</p>
+             <p className="text-2xl font-black">{new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</p>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 -mt-10">
+        
+        {/* ---  NOW SERVING (คิวที่กำลังให้บริการ) --- */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="card-cozy p-10! bg-white border-emerald-100 border-2 shadow-2xl shadow-emerald-900/5 h-full">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center animate-pulse"><PlayCircle size={20}/></div>
+              <h2 className="text-2xl font-black text-primary tracking-tighter uppercase">Now Serving</h2>
+            </div>
+
+            <div className="space-y-6">
+              {queues.serving.length > 0 ? queues.serving.map((q: any) => (
+                <div key={q.id} className="flex items-center justify-between p-8 bg-emerald-50/50 rounded-card border border-emerald-100 group">
+                   <div className="space-y-1">
+                      <p className="text-5xl font-black text-emerald-700 tracking-tighter mb-2">#{q.id}</p>
+                      <p className="text-sm font-black text-primary uppercase">{q.customerName}</p>
+                   </div>
+                   <div className="text-right">
+                      <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Provider</p>
+                      <p className="text-xl font-black text-primary uppercase">{q.staffName}</p>
+                   </div>
+                </div>
+              )) : (
+                <div className="py-20 text-center text-stone-300 space-y-4">
+                  <Coffee size={48} className="mx-auto opacity-20" />
+                  <p className="font-black text-xs uppercase tracking-widest">No active sessions at the moment</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* --- 🟡 ฝั่งขวา: Next Up (คิวถัดไปที่ยืนยันแล้ว) --- */}
-        <div className="space-y-10">
-          <div className="flex items-center justify-between border-b-4 border-stone-200 pb-6">
-            <h3 className="text-2xl font-black text-accent flex items-center gap-4">
-              <Users size={32} /> NEXT IN LINE
-            </h3>
-            <span className="bg-primary text-white px-4 py-1 rounded-full text-xs font-black">{upNext.length} QUEUES</span>
-          </div>
-          
-          <div className="space-y-6">
-            {upNext.map((q, idx) => (
-              <div key={q.id} className="bg-white/40 backdrop-blur-sm rounded-[32px] p-8 border border-white flex justify-between items-center transition-all hover:bg-white hover:shadow-xl hover:shadow-primary/5">
-                <div className="flex items-center gap-8">
-                  <span className="text-4xl font-black text-primary/20">0{idx + 1}</span>
-                  <div>
-                    <p className="font-black text-2xl text-secondary-foreground">{q.customerName.split(' ')[0]}***</p>
-                    <p className="text-[10px] font-black text-accent uppercase tracking-widest mt-1">{q.serviceName}</p>
-                  </div>
-                </div>
-                <div className="bg-stone-100 px-6 py-3 rounded-2xl">
-                  <p className="text-lg font-black flex items-center gap-2 text-secondary-foreground">
-                    <Clock size={20} className="text-primary" />
-                    {new Date(q.startTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-              </div>
-            ))}
-
-            {upNext.length === 0 && (
-              <div className="text-center py-20">
-                <p className="italic text-stone-400 font-medium">ไม่มีรายการนัดหมายถัดไป</p>
-              </div>
-            )}
-          </div>
-
-          {/* 🔘 รายการจองที่รอการชำระเงิน (Pending) */}
-          {waitingForPayment.length > 0 && (
-            <div className="pt-10 border-t-2 border-dashed border-stone-200">
-              <h4 className="text-[10px] font-black text-accent tracking-[0.3em] uppercase mb-6 opacity-60">
-                Waiting for Confirmation ({waitingForPayment.length})
-              </h4>
-              <div className="flex flex-wrap gap-3">
-                {waitingForPayment.map(p => (
-                  <span key={p.id} className="px-5 py-2 bg-stone-100 rounded-full text-[11px] font-bold text-stone-500 border border-stone-200">
-                    {p.customerName.split(' ')[0]}
-                  </span>
-                ))}
-              </div>
+        {/* ---  UP NEXT (คิวที่กำลังรอ) --- */}
+        <div className="lg:col-span-5 space-y-6">
+          <div className="card-cozy p-10! border-stone-100 h-full">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="w-10 h-10 bg-accent text-white rounded-xl flex items-center justify-center"><ArrowRightCircle size={20}/></div>
+              <h2 className="text-2xl font-black text-primary tracking-tighter uppercase">Up Next</h2>
             </div>
-          )}
+
+            <div className="space-y-4">
+              {queues.waiting.length > 0 ? queues.waiting.map((q: any) => (
+                <div key={q.id} className="flex items-center justify-between p-6 bg-stone-50 rounded-[28px] border border-stone-100 group hover:bg-white hover:shadow-xl transition-all duration-500">
+                   <div className="flex items-center gap-6">
+                      <p className="text-2xl font-black text-primary">#{q.id}</p>
+                      <div className="w-px h-8 bg-stone-200" />
+                      <div>
+                        <p className="text-sm font-black text-primary uppercase leading-none">{q.customerName}</p>
+                        <p className="text-[9px] font-black text-muted uppercase tracking-widest mt-1">{q.serviceName}</p>
+                      </div>
+                   </div>
+                   <div className="text-right">
+                      <p className="text-xs font-black text-primary">{new Date(q.startTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</p>
+                   </div>
+                </div>
+              )) : (
+                <div className="py-20 text-center text-stone-200 uppercase font-black text-[10px] tracking-widest">
+                  Waiting list is empty
+                </div>
+              )}
+            </div>
+
+            {/* Total Waiting Summary */}
+            <div className="mt-10 pt-8 border-t border-stone-100 flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                  <Users className="text-accent" size={20} />
+                  <span className="text-xs font-black text-primary uppercase tracking-widest">Total Waiting</span>
+               </div>
+               <span className="text-3xl font-black text-primary tracking-tighter">{queues.waiting.length}</span>
+            </div>
+          </div>
         </div>
 
       </div>
+
+      {/* --- Bottom Footer Tip --- */}
+      <footer className="max-w-7xl mx-auto px-6 mt-12 text-center">
+         <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-full border border-stone-100 shadow-sm text-muted">
+            <CheckCircle2 size={16} className="text-emerald-500" />
+            <p className="text-[10px] font-black uppercase tracking-widest">Please be ready 5 minutes before your slot</p>
+         </div>
+      </footer>
     </div>
   );
 }

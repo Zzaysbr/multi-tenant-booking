@@ -8,6 +8,7 @@ export const tenants = pgTable("tenants", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   path_name: varchar("path_name", { length: 255 }).unique().notNull(),
+  logo_url: text("logo_url"),
   phone: varchar("phone", { length: 20 }),
   address: text("address"),
   qrCodeUrl: text("qr_code_url"),

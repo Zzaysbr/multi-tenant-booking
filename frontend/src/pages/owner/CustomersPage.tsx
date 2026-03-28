@@ -1,175 +1,90 @@
+// src/pages/owner/CustomersPage.tsx
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
-import { toast } from 'sonner';
-import { 
-  Calendar, Clock, Scissors, User, 
-  CheckCircle2, XCircle, ChevronRight, Loader2, AlertCircle 
-} from 'lucide-react';
+import { Users, Search, Mail, CalendarCheck, Loader2, Star, UserCircle } from 'lucide-react';
 
-export default function BookingsPage() {
+export default function CustomersPage() {
   const { user } = useAuth();
-  const [bookings, setBookings] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const fetchBookings = async () => {
-    if (!user?.tenantPath) return;
-    setLoading(true);
-    try {
-      const res = await api.get(`/api/${user.tenantPath}/owner/bookings`);
-      setBookings(res.data.bookings || []);
-    } catch (err) {
-      toast.error("ดึงข้อมูลการจองไม่สำเร็จ");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    fetchBookings();
+    api.get(`/api/${user?.tenantPath}/owner/customers`)
+      .then(res => setCustomers(res.data.customers || []))
+      .catch(() => console.error("Error loading customers data"))
+      .finally(() => setLoading(false));
   }, [user?.tenantPath]);
 
-  // 🔥 ฟังก์ชันอัปเดตสถานะ (หัวใจสำคัญที่คุณตามหา)
-  const handleUpdateStatus = async (id: number, newStatus: string) => {
-    try {
-      await api.patch(`/api/${user?.tenantPath}/owner/bookings/${id}/status`, { 
-        status: newStatus 
-      });
-      
-      const messages: Record<string, string> = {
-        confirmed: "ยืนยันการจองเรียบร้อย ✨",
-        completed: "ปิดงาน (Check-out) สำเร็จ ✅",
-        canceled: "ยกเลิกการจองแล้ว"
-      };
-      
-      toast.success(messages[newStatus]);
-      fetchBookings(); // รีโหลดข้อมูลใหม่หลังอัปเดต
-    } catch (error) {
-      toast.error("ไม่สามารถเปลี่ยนสถานะได้");
-    }
-  };
+  const filtered = customers.filter((c: any) => 
+    c.name?.toLowerCase().includes(search.toLowerCase()) || 
+    c.email?.toLowerCase().includes(search.toLowerCase())
+  );
 
-  if (loading && bookings.length === 0) {
-    return (
-      <div className="h-[60vh] flex flex-col items-center justify-center text-accent animate-pulse">
-        <Loader2 className="animate-spin mb-2" size={32} />
-        <p>กำลังเปิดสมุดนัดหมาย...</p>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="h-[60vh] flex flex-col items-center justify-center animate-pulse font-sans font-black text-[10px] uppercase tracking-widest text-accent">
+       <Loader2 className="animate-spin mb-4" size={40} />
+       ACCESSING CLIENT DATABASE...
+    </div>
+  );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans pb-20 text-secondary-foreground No Italic">
       
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-secondary-foreground flex items-center gap-3">
-          <Calendar className="text-primary" size={32} />
-          จัดการรายการจอง
-        </h1>
-        <p className="text-accent text-sm md:text-base font-medium mt-1">
-          อัปเดตสถานะการเข้าใช้บริการของลูกค้าที่นี่
-        </p>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-card shadow-sm border border-accent/5 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left min-w-200">
-            <thead className="bg-secondary/30 text-accent text-[10px] uppercase font-black tracking-widest">
-              <tr>
-                <th className="px-8 py-5">ลูกค้า / บริการ</th>
-                <th className="px-8 py-5">ช่าง</th>
-                <th className="px-8 py-5">เวลา</th>
-                <th className="px-8 py-5">สถานะ</th>
-                <th className="px-8 py-5 text-right">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-accent/5">
-              {bookings.length === 0 ? (
-                <tr><td colSpan={5} className="p-20 text-center text-accent italic">ยังไม่มีการจองเข้ามา 🍃</td></tr>
-              ) : (
-                bookings.map((b: any) => (
-                  <tr key={b.id} className="hover:bg-secondary/10 transition-colors group">
-                    <td className="px-8 py-6">
-                      <p className="font-bold text-secondary-foreground text-lg">{b.customerName}</p>
-                      <p className="text-xs text-primary font-bold flex items-center gap-1 uppercase tracking-tighter">
-                        <Scissors size={12} /> {b.serviceName}
-                      </p>
-                    </td>
-                    <td className="px-8 py-6 text-accent font-bold">
-                      <div className="flex items-center gap-2"><User size={16} /> {b.staffName}</div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="text-sm font-bold text-secondary-foreground flex flex-col">
-                        <span className="flex items-center gap-1.5"><Calendar size={14} className="text-accent" /> {new Date(b.startTime).toLocaleDateString('th-TH')}</span>
-                        <span className="flex items-center gap-1.5 text-accent font-medium"><Clock size={14} /> {new Date(b.startTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                        b.status === 'confirmed' ? 'bg-emerald-100 text-emerald-600' : 
-                        b.status === 'pending' ? 'bg-orange-100 text-orange-600' : 
-                        b.status === 'completed' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'
-                      }`}>
-                        {b.status}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex justify-end gap-2">
-                        
-                        {/* ✅ ปุ่มยืนยัน (โชว์เฉพาะตอน Pending) */}
-                        {b.status === 'pending' && (
-                          <button 
-                            onClick={() => handleUpdateStatus(b.id, 'confirmed')}
-                            className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-xl transition-all shadow-sm"
-                            title="ยืนยันการจอง"
-                          >
-                            <CheckCircle2 size={20} />
-                          </button>
-                        )}
-
-                        {/* ✅ ปุ่มปิดงาน (โชว์เฉพาะตอน Confirmed) */}
-                        {b.status === 'confirmed' && (
-                          <button 
-                            onClick={() => handleUpdateStatus(b.id, 'completed')}
-                            className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white rounded-xl transition-all shadow-sm"
-                            title="เช็คเอาท์ / งานเสร็จสิ้น"
-                          >
-                            <ChevronRight size={20} />
-                          </button>
-                        )}
-
-                        {/* ✅ ปุ่มยกเลิก (โชว์ถ้ายังไม่เสร็จ) */}
-                        {b.status !== 'canceled' && b.status !== 'completed' && (
-                          <button 
-                            onClick={() => { if(confirm("ยกเลิกการจองนี้?")) handleUpdateStatus(b.id, 'canceled') }}
-                            className="p-2 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-xl transition-all shadow-sm"
-                          >
-                            <XCircle size={20} />
-                          </button>
-                        )}
-
-                        {/* ถ้าเสร็จแล้วโชว์แค่ไอคอนเฉยๆ */}
-                        {b.status === 'completed' && <div className="text-xs text-accent font-bold italic px-4 py-2 uppercase">Archived</div>}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h1 className="text-3xl font-black text-primary flex items-center gap-3 tracking-tighter uppercase"><Users size={32} /> Customers</h1>
+          <p className="text-muted text-[10px] font-black mt-1 uppercase tracking-widest">Manage your VIP client profiles and history</p>
         </div>
-      </div>
-
-      {/* Helper Info */}
-      <div className="bg-orange-50 p-4 rounded-2xl flex items-start gap-3 border border-orange-100">
-        <AlertCircle className="text-orange-500 mt-0.5" size={18} />
-        <div className="text-xs text-orange-800 space-y-1">
-          <p className="font-bold">คู่มือการจัดการ:</p>
-          <p>• เมื่อกดยืนยันแล้ว สถานะจะเปลี่ยนเป็น <span className="font-bold">Confirmed</span></p>
-          <p>• เมื่อลูกค้าใช้บริการเสร็จ ให้กดปุ่มลูกศรเพื่อเปลี่ยนเป็น <span className="font-bold">Completed</span> เพื่อปิดงาน</p>
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
+          <input 
+            type="text" value={search} onChange={e => setSearch(e.target.value)}
+            className="input-warm w-full pl-12" placeholder="Search by Name or Email..."
+          />
         </div>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
+        {filtered.map((c: any) => (
+          <div key={c.id} className="card-cozy p-8 border-stone-50 hover:border-accent/30 transition-all group shadow-xl shadow-black/5 hover:-translate-y-1 duration-500">
+            <div className="flex items-start justify-between mb-6">
+               <div className="w-16 h-16 bg-secondary rounded-3xl flex items-center justify-center text-primary border border-stone-100 shadow-inner group-hover:scale-110 transition-transform duration-500 font-black text-2xl uppercase tracking-tighter">
+                 {c.name?.charAt(0)}
+               </div>
+               <div className="flex gap-1.5 text-accent opacity-60">
+                  <Star size={16} fill="currentColor" />
+                  <Star size={16} fill="currentColor" />
+                  <Star size={16} fill="currentColor" />
+               </div>
+            </div>
+
+            <div className="space-y-1.5 mb-6">
+              <h4 className="text-xl font-black text-primary tracking-tight leading-none">{c.name}</h4>
+              <p className="text-xs font-bold text-muted flex items-center gap-2">
+                <Mail size={14} className="opacity-60" /> {c.email || 'No email provided'}
+              </p>
+              <p className="text-[9px] font-bold text-muted uppercase tracking-[0.2em]">Contact: {c.phone || '-'}</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 py-4 border-t border-stone-50 mt-4 text-sm font-black text-primary uppercase">
+                <div className="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-stone-100">
+                   <div className="flex items-center gap-2">
+                      <CalendarCheck size={18} className="text-stone-300" /> Total Bookings
+                   </div>
+                   {c.bookingCount || 0} ครั้ง
+                </div>
+            </div>
+          </div>
+        ))}
+
+        {filtered.length === 0 && (
+          <div className="md:col-span-3 py-20 bg-stone-50/50 rounded-[40px] border-2 border-dashed border-stone-100 flex flex-col items-center justify-center text-stone-300 gap-3">
+             <UserCircle size={48} />
+             <p className="font-bold text-[10px] uppercase tracking-widest">No customer profiles found</p>
+          </div>
+        )}
       </div>
     </div>
   );

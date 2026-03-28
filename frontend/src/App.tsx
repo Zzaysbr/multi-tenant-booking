@@ -1,10 +1,10 @@
+// src/App.tsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from 'sonner';
 
-import AuthPage from './pages/auth/AuthPage';
-import DashboardLayout from './layouts/DashboardLayout';
+// Owner Pages
 import OverviewPage from './pages/owner/OverviewPage';
 import BookingsPage from './pages/owner/BookingsPage';
 import StaffsPage from './pages/owner/StaffsPage';
@@ -12,27 +12,34 @@ import ServicesPage from './pages/owner/ServicesPage';
 import CustomersPage from './pages/owner/CustomersPage';
 import ReportsPage from './pages/owner/ReportsPage';
 import SettingsPage from './pages/owner/SettingsPage';
-import BookingPage from './pages/customer/BookingPage';
+
+// Customer Pages
+import AuthPage from './pages/auth/AuthPage';
 import HomePage from './pages/customer/HomePage';
+import ShopPage from './pages/customer/ShopPage';
+import BookingPage from './pages/customer/BookingPage';
 import MyBookingsPage from './pages/customer/MyBookingsPage';
 import PaymentPage from './pages/customer/PaymentPage';
 import QueueBoard from './pages/customer/QueueBoard';
+
+// Layouts
+import MainLayout from './components/layouts/MainLayout';
+import CustomerLayout from './components/layouts/CustomerLayout';
 
 function App() {
   return (
     <AuthProvider>
       <Toaster position="top-center" richColors />
       <Routes>
-        {/* --- Public Routes --- */}
+        {/* --- Authentication --- */}
         <Route path="/login" element={<AuthPage />} />
         
-        {/* --- Root: หน้าแรกโชว์ร้านค้าทั้งหมด --- */}
+        {/* --- หน้ารวม --- */}
         <Route path="/" element={<HomePage />} />
         
         {/* --- Protected Owner Routes --- */}
-        {/* เราใช้โครงสร้าง /owner ไปเลย เพราะใน Dashboard ของคุณดึงข้อมูลจาก user.tenantPath อยู่แล้ว */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/owner" element={<DashboardLayout />}>
+          <Route path="/owner" element={<MainLayout />}>
             <Route path="dashboard" element={<OverviewPage />} />
             <Route path="bookings" element={<BookingsPage />} />
             <Route path="staffs" element={<StaffsPage />} />
@@ -44,11 +51,16 @@ function App() {
           </Route>
         </Route>
 
-        {/* --- Customer Booking (Dynamic) --- */}
-        <Route path="/:tenantPath" element={<BookingPage />} />
-        <Route path='/:tenantPath/my-bookings' element={<MyBookingsPage />}/>
-        <Route path='/:tenantPath/pay/:bookingId' element={<PaymentPage />}/> 
-        <Route path='/:tenantPath/queue' element={<QueueBoard />}/>
+        {/* --- Customer Journey --- */}
+        <Route path="/:tenantPath" element={<CustomerLayout />}>
+          <Route index element={<ShopPage />} />
+          
+          {/* หน้าอื่นๆ ของร้านนั้นๆ */}
+          <Route path="book" element={<BookingPage />} />
+          <Route path="my-bookings" element={<MyBookingsPage />}/>
+          <Route path="pay/:bookingId" element={<PaymentPage />}/> 
+          <Route path="queue" element={<QueueBoard />}/>
+        </Route>
         
         {/* --- 404 Redirect --- */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -179,4 +179,28 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
       return { success: true, qrCodeUrl: fileUrl };
     } catch (e) { set.status = 500; return { error: "อัปโหลดล้มเหลว" }; }
   }, { body: t.Object({ qrFile: t.File() }) })
+
+  
+  .post("/config/shop-upload", async ({ currentTenant, body, set }: any) => {
+  try {
+    const { shopFile } = body;
+    if (!shopFile) { set.status = 400; return { error: "ไม่พบไฟล์รูปภาพ" }; }
+
+    const fileName = `shop-${currentTenant.id}-${Date.now()}.png`;
+    const filePath = `uploads/${fileName}`;
+    await Bun.write(filePath, shopFile);
+    
+    await db.update(tenants)
+      .set({ logo_url: `/${filePath}` })
+      .where(eq(tenants.id, currentTenant.id));
+
+    return { shopImageUrl: `/${filePath}` };
+  } catch (e) {
+    set.status = 500;
+    return { error: "อัปโหลดรูปร้านไม่สำเร็จ" };
+  }
+})
+
+
+
 );

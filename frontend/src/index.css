@@ -1,39 +1,42 @@
+/* src/index.css */
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Kanit", sans-serif;
-  --color-primary: #8E735B;
-  --color-primary-foreground: #FFFFFF;
-  --color-secondary: #F5F2ED;
-  --color-secondary-foreground: #4A3F35;
-  --color-accent: #D4B996;
-  --color-bg: #FAF9F6;
-  --radius-btn: 16px;
-  --radius-card: 24px;
+  --font-sans: "Inter", "Kanit", sans-serif;
+  --color-primary: #4A3728;
+  --color-accent: #B38B6D;
+  --color-secondary: #F5EFEA;
+  --color-secondary-foreground: #2D241E;
+  --color-muted: #6F6156;
+  --color-bg: #FDFCFB;
+
+  --radius-btn: 18px;
+  /* ✅ จุดสมดุลความงาม: 36px */
+  --radius-card: 36px; 
+  
+  --shadow-cozy: 0 20px 50px rgba(74, 55, 40, 0.05);
 }
 
 @layer base {
   body {
-    /* แก้ไขตามคำแนะนำ: ใช้ text-secondary-foreground */
-    @apply bg-bg text-secondary-foreground antialiased selection:bg-accent/30;
+    @apply bg-bg text-secondary-foreground antialiased selection:bg-accent/20;
+    /* ✅ ยันต์กันตัวเอียง: บังคับทุกอย่างให้ตั้งตรง */
+    font-style: normal !important;
   }
 }
 
 @layer components {
-  .btn-primary {
-    @apply px-6 py-3 bg-primary text-white rounded-btn font-bold 
-           transition-all duration-300 shadow-sm active:scale-95 
-           flex items-center justify-center gap-2 cursor-pointer
-           hover:brightness-110 hover:shadow-[0_10px_20px_rgba(142,115,91,0.2)];
-  }
-  
-  .input-warm {
-    @apply w-full px-5 py-3.5 bg-white border border-accent/20 rounded-btn 
-           focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary 
-           transition-all placeholder:text-accent/60 text-base;
-  }
-
   .card-cozy {
-    @apply bg-white p-6 md:p-8 rounded-card border border-accent/5 shadow-[0_15px_40px_rgba(142,115,91,0.05)];
+    @apply bg-white p-8 rounded-card border border-stone-100 shadow-cozy
+           transition-all duration-500 hover:shadow-[0_30px_60px_rgba(74,55,40,0.08)] 
+           hover:-translate-y-1;
+  }
+  .input-warm {
+    @apply w-full px-6 py-4 bg-white border border-stone-200 rounded-btn font-medium
+           focus:outline-none focus:ring-4 focus:ring-accent/10 focus:border-accent 
+           transition-all placeholder:text-muted/50 text-secondary-foreground;
+  }
+  .badge-cafe {
+    @apply px-3 py-1 bg-accent/10 text-accent rounded-full text-[10px] font-black uppercase tracking-widest;
   }
 }

@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { db } from "../db";
 import { bookings, staffs, services, businessHours } from "../db/schema";
-import { eq, and, ne, lt, gt, desc } from "drizzle-orm";
+import { eq, and, ne, lt, gt, desc, sql, asc, or } from "drizzle-orm";
 import { sendLinePush, createBookingFlex } from "../utils/line";
 
 export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => group
@@ -129,5 +129,67 @@ export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => 
     .orderBy(desc(bookings.startTime));
 
     return { bookings: myHistory };
+  })
+
+  .get("/busy-slots", async ({ query, currentTenant }: any) => {
+    const { staffId, date } = query;
+    if (!staffId || !date) return { busy: [] };
+
+    const res = await db.select({
+      start: bookings.startTime,
+      end: bookings.endTime
+    })
+    .from(bookings)
+    .where(and(
+      eq(bookings.tenantId, currentTenant.id),
+      eq(bookings.staffId, Number(staffId)),
+      eq(sql`CAST(${bookings.startTime} AS DATE)`, date),
+      ne(bookings.status, 'canceled')
+    ));
+
+    return { busy: res };
+  })
+
+
+  .get("/queue", async ({ currentTenant, set }: any) => {
+    try {
+      const todayBookings = await db.select({
+        id: bookings.id,
+        // ✅ เปลี่ยนจาก customerName เป็น guestName ให้ตรงตาม Schema ของพี่
+        customerName: bookings.guestName, 
+        startTime: bookings.startTime,
+        status: bookings.status,
+        serviceName: services.name,
+        staffName: staffs.name,
+      })
+      .from(bookings)
+      .innerJoin(services, eq(bookings.serviceId, services.id))
+      .innerJoin(staffs, eq(bookings.staffId, staffs.id))
+      .where(
+        and(
+          eq(bookings.tenantId, currentTenant.id),
+          // ✅ กรองเฉพาะของวันนี้
+          sql`CAST(${bookings.startTime} AS DATE) = CURRENT_DATE`,
+          // ✅ ใช้ or() ที่ import มาแล้ว
+          or(
+            eq(bookings.status, 'confirmed'),
+            eq(bookings.status, 'pending')
+          )
+        )
+      )
+      // ✅ ใช้ asc() ที่ import มาแล้ว
+      .orderBy(asc(bookings.startTime)); 
+
+      // แยกกองข้อมูลส่งให้ Frontend
+      const serving = todayBookings.filter(b => b.status === 'confirmed');
+      const waiting = todayBookings.filter(b => b.status === 'pending');
+
+      return { serving, waiting };
+
+    } catch (error) {
+      console.error("Queue Error:", error);
+      set.status = 500;
+      return { error: "ไม่สามารถดึงข้อมูลคิวได้" };
+    }
   })
 );

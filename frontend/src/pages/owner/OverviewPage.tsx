@@ -1,3 +1,4 @@
+// src/pages/owner/OverviewPage.tsx
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
@@ -7,11 +8,11 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, Users, ShoppingBag, DollarSign, 
-  ArrowUpRight, Loader2, Calendar 
+  ArrowUpRight, Loader2, Calendar, Sparkles, UserCheck
 } from 'lucide-react';
 
-// 🎨 Earth-tone Palette สำหรับกราฟ
-const COLORS = ['#B38B6D', '#D4A373', '#A98467', '#827397', '#E9EDC9'];
+// ☕️ Premium Cafe Palette
+const COLORS = ['#4A3728', '#B38B6D', '#6F6156', '#8E735B', '#D4B996'];
 
 export default function OverviewPage() {
   const { user } = useAuth();
@@ -38,114 +39,132 @@ export default function OverviewPage() {
   }, [user?.tenantPath]);
 
   if (loading) return (
-    <div className="h-[70vh] flex flex-col items-center justify-center text-accent animate-pulse">
+    <div className="h-[70vh] flex flex-col items-center justify-center text-primary animate-pulse font-sans">
       <Loader2 className="animate-spin mb-4" size={40} />
-      <p className="italic font-medium">กำลังรวบรวมตัวเลขให้ครับพี่...</p>
+      <p className="font-black text-[10px] uppercase tracking-[0.3em]">Gathering Intelligence...</p>
     </div>
   );
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 font-sans">
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-20 font-sans">
       
-      {/* --- Header --- */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-secondary-foreground flex items-center gap-3">
-            <TrendingUp className="text-primary" size={32} /> ภาพรวมธุรกิจ
-          </h1>
-          <p className="text-accent text-sm font-medium italic mt-1">สรุปรายได้และสถิติการจองของร้านคุณในวันนี้</p>
+      {/* --- ☕️ Header Section --- */}
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+             <div className="p-1.5 bg-accent/10 rounded-lg text-accent"><Sparkles size={16}/></div>
+             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-accent">Business Intelligence</span>
+          </div>
+          <h1 className="text-4xl font-black text-primary tracking-tighter">ภาพรวมความสำเร็จ</h1>
+          <p className="text-muted text-sm font-medium leading-relaxed max-w-md">วิเคราะห์ยอดขายและประสิทธิภาพของพนักงานเพื่อการเติบโตของธุรกิจคุณ</p>
         </div>
-        <div className="bg-white px-6 py-3 rounded-2xl border border-stone-100 shadow-sm flex items-center gap-3">
-          <Calendar size={18} className="text-primary" />
-          <span className="text-sm font-bold text-secondary-foreground">28 มีนาคม 2026</span>
+        <div className="bg-white px-6 py-4 rounded-[24px] border border-stone-100 shadow-sm flex items-center gap-3">
+          <Calendar size={18} className="text-accent" />
+          <span className="text-xs font-black text-primary uppercase tracking-widest">
+            {new Date().toLocaleDateString('th-TH', { day: '2-digit', month: 'long', year: 'numeric' })}
+          </span>
         </div>
       </header>
 
       {/* --- 🚀 Quick Stats Cards --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <StatCard 
-          title="รายได้รวม" 
+          title="รายได้วันนี้" 
           value={`฿${data?.totalRevenue?.toLocaleString() || 0}`} 
-          icon={<DollarSign className="text-emerald-600" />}
-          trend="+12% จากเดือนที่แล้ว"
-          color="bg-emerald-50"
+          icon={<DollarSign size={20} />}
+          trend="+12% จากเมื่อวาน"
+          isPrimary={true}
         />
         <StatCard 
-          title="รายการจองทั้งหมด" 
+          title="รายการจองรวม" 
           value={stats?.total || 0} 
-          icon={<ShoppingBag className="text-primary" />}
-          trend="รวมทุกสถานะ"
-          color="bg-primary/5"
+          icon={<ShoppingBag size={20} />}
+          trend="รวมทุกสถานะคิว"
         />
         <StatCard 
-          title="รอยืนยัน" 
+          title="รอตรวจสอบ" 
           value={stats?.pending || 0} 
-          icon={<Loader2 className="text-orange-500" />}
-          trend="ต้องตรวจสอบสลิป"
-          color="bg-orange-50"
+          icon={<Loader2 size={20} />}
+          trend="คิวที่ต้องเช็คสลิป"
         />
         <StatCard 
           title="สำเร็จแล้ว" 
           value={stats?.confirmed || 0} 
-          icon={<Users className="text-blue-500" />}
-          trend="คิวที่เข้าใช้บริการแล้ว"
-          color="bg-blue-50"
+          icon={<UserCheck size={20} />}
+          trend="ลูกค้าเข้าใช้บริการแล้ว"
         />
       </div>
 
-      {/* --- 📈 Charts Section --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* --- 📈 Advanced Analytics --- */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         
-        {/* กราฟวงกลม: สัดส่วนรายได้แยกตามบริการ */}
-        <div className="card-cozy p-8! border border-stone-100 bg-white shadow-sm">
-          <h3 className="text-lg font-bold text-secondary-foreground mb-8 flex items-center gap-2">
-            <TrendingUp size={18} className="text-primary" /> รายได้แยกตามบริการ
-          </h3>
-          <div className="h-[300px]">
+        {/* รายได้แยกตามบริการ (Pie Chart) */}
+        <div className="lg:col-span-7 card-cozy p-10! border-stone-100">
+          <div className="flex justify-between items-center mb-10">
+            <h3 className="text-xl font-black text-primary tracking-tight">รายได้แยกตามประเภทบริการ</h3>
+            <div className="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center text-accent"><TrendingUp size={20}/></div>
+          </div>
+          <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data?.revenueByService}
                   cx="50%" cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
+                  innerRadius={80}
+                  outerRadius={120}
+                  paddingAngle={8}
                   dataKey="totalRevenue"
                   nameKey="name"
                 >
-                  {data?.revenueByService.map((entry: any, index: number) => (
+                  {data?.revenueByService?.map((_: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip 
-                   contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                   formatter={(value: any) => [`฿${value.toLocaleString()}`, 'รายได้']}
+                  contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', padding: '16px' }}
+                  itemStyle={{ fontWeight: '900', fontSize: '12px', color: '#2D241E' }}
                 />
-                <Legend iconType="circle" />
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontWeight: 'bold', fontSize: '11px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* กราฟแท่ง: จำนวนงานแยกตามพนักงาน */}
-        <div className="card-cozy p-8! border border-stone-100 bg-white shadow-sm">
-          <h3 className="text-lg font-bold text-secondary-foreground mb-8 flex items-center gap-2">
-            <Users size={18} className="text-primary" /> ภาระงานพนักงาน (คิว)
-          </h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data?.bookingsByStaff}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0F0F0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 700 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                <Tooltip 
-                  cursor={{ fill: '#F9F8F6' }}
-                  contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                />
-                <Bar dataKey="count" fill="#B38B6D" radius={[10, 10, 0, 0]} barSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        {/* พนักงานดีเด่น (List Based Analytics) */}
+        <div className="lg:col-span-5 flex flex-col gap-8">
+           <div className="card-cozy p-10! bg-primary text-white border-none shadow-2xl shadow-primary/20 flex-1">
+              <h3 className="text-xl font-black mb-8 tracking-tight">พนักงานดีเด่น (คิวสูงสุด)</h3>
+              <div className="space-y-6">
+                {data?.bookingsByStaff?.map((st: any, idx: number) => (
+                  <div key={idx} className="flex items-center justify-between group">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center font-black text-lg border border-white/5 group-hover:bg-accent transition-colors">
+                          {st.name.charAt(0)}
+                       </div>
+                       <div>
+                          <p className="font-black text-sm">{st.name}</p>
+                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Team Member</p>
+                       </div>
+                    </div>
+                    <div className="text-right">
+                       <p className="text-lg font-black">{st.count}</p>
+                       <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Bookings</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+           </div>
+
+           {/* Small Advice Card */}
+           <div className="bg-secondary rounded-[32px] p-8 border border-stone-100 flex items-center gap-6">
+              <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center text-accent shrink-0">
+                 <TrendingUp size={24} />
+              </div>
+              <div className="space-y-1">
+                 <p className="text-xs font-black text-primary uppercase tracking-widest leading-none">Insight</p>
+                 <p className="text-[11px] font-medium text-muted leading-relaxed">ธุรกิจของคุณโตขึ้น 15% ในเดือนนี้ ลองเพิ่มบริการใหม่เพื่อกระตุ้นยอดขายสิครับ!</p>
+              </div>
+           </div>
         </div>
 
       </div>
@@ -153,18 +172,23 @@ export default function OverviewPage() {
   );
 }
 
-// Sub-component สำหรับ Stat Card
-function StatCard({ title, value, icon, trend, color }: any) {
+// --- 🛠️ Sub-component สำหรับ Stat Card ---
+function StatCard({ title, value, icon, trend, isPrimary }: any) {
   return (
-    <div className={`p-6 rounded-[32px] border border-white shadow-sm transition-all hover:shadow-md ${color}`}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-3 bg-white rounded-2xl shadow-sm">{icon}</div>
-        <ArrowUpRight size={16} className="text-accent opacity-30" />
+    <div className={`card-cozy p-8! border-stone-100 group transition-all duration-500 hover:-translate-y-2 ${isPrimary ? 'bg-linear-to-br from-white to-secondary/30' : ''}`}>
+      <div className="flex justify-between items-start mb-6">
+        <div className={`p-4 rounded-2xl shadow-sm ${isPrimary ? 'bg-primary text-white' : 'bg-secondary text-accent'}`}>
+          {icon}
+        </div>
+        <ArrowUpRight size={16} className="text-stone-300 group-hover:text-accent transition-colors" />
       </div>
       <div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-accent mb-1">{title}</p>
-        <h4 className="text-2xl font-black text-secondary-foreground">{value}</h4>
-        <p className="text-[10px] font-bold text-accent mt-2 italic">{trend}</p>
+        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted mb-2 leading-none">{title}</p>
+        <h4 className="text-3xl font-black text-primary tracking-tighter">{value}</h4>
+        <div className="flex items-center gap-1.5 mt-3">
+           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+           <p className="text-[10px] font-bold text-muted uppercase tracking-widest">{trend}</p>
+        </div>
       </div>
     </div>
   );

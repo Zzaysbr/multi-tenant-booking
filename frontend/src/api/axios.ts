@@ -5,7 +5,6 @@ const api = axios.create({ baseURL: 'http://localhost:3000' });
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   
-  // ✅ บังคับใส่ Header เสมอถ้ามี Token
   if (token && token !== "undefined" && token !== "null") {
     config.headers['Authorization'] = `Bearer ${token}`;
   }

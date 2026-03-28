@@ -58,7 +58,7 @@ export default function ServicesPage() {
             <label className="text-sm font-medium">เวลา (นาที)</label>
             <input required type="number" value={newService.durationMinutes} onChange={e => setNewService({...newService, durationMinutes: e.target.value})} className="input-warm w-full" />
           </div>
-          <button type="submit" className="btn-primary h-[42px] px-6">เพิ่มบริการ</button>
+          <button type="submit" className="btn-primary h-10.5 px-6">เพิ่มบริการ</button>
         </form>
       </div>
 

@@ -7,7 +7,10 @@ export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "f
 export const tenants = pgTable("tenants", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  path_name: varchar("path_name", { length: 100 }).notNull().unique(),
+  path_name: varchar("path_name", { length: 255 }).unique().notNull(),
+  phone: varchar("phone", { length: 20 }),
+  address: text("address"),
+  qrCodeUrl: text("qr_code_url"),
   line_channel_token: text("line_channel_token"),
   createdAt: timestamp("created_at").defaultNow(),
 });

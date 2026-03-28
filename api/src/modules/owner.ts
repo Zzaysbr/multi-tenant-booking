@@ -1,15 +1,16 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { db } from "../db";
-import { staffs, services, bookings, users, payments } from "../db/schema"; 
+import { staffs, services, bookings, users, payments, tenants } from "../db/schema"; 
 import { eq, and, desc, sql } from "drizzle-orm";
 
 export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
+  
   .onBeforeHandle(({ currentUser, currentTenant, set }: any) => {
     if (!currentTenant) {
-      set.status = 404; return { error: "ไม่พบร้านค้า" };
+      set.status = 404; return { error: "ไม่พบข้อมูลร้านค้า" };
     }
     if (!currentUser || (currentUser.role !== 'OWNER' && currentUser.role !== 'STAFF')) {
-      set.status = 401; return { error: "ไม่มีสิทธิ์เข้าถึง" };
+      set.status = 401; return { error: "ไม่มีสิทธิ์เข้าถึงส่วนนี้" };
     }
   })
   
@@ -21,6 +22,51 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
     }).from(bookings).where(eq(bookings.tenantId, currentTenant.id));
     return { stats: counts };
   })
+
+  .get("/reports", async ({ currentTenant }: any) => {
+    const revenueByService = await db.select({
+      name: services.name,
+      totalRevenue: sql<number>`sum(${services.price})`,
+      count: sql<number>`count(*)`
+    })
+    .from(bookings)
+    .innerJoin(services, eq(bookings.serviceId, services.id))
+    .where(
+      and(
+        eq(bookings.tenantId, currentTenant.id),
+        sql`status IN ('confirmed', 'completed')`
+      )
+    )
+    .groupBy(services.name);
+
+    const bookingsByStaff = await db.select({
+      name: staffs.name,
+      count: sql<number>`count(*)`
+    })
+    .from(bookings)
+    .innerJoin(staffs, eq(bookings.staffId, staffs.id))
+    .where(eq(bookings.tenantId, currentTenant.id))
+    .groupBy(staffs.name);
+
+    const [totalRevenue] = await db.select({
+      sum: sql<number>`sum(${services.price})`
+    })
+    .from(bookings)
+    .innerJoin(services, eq(bookings.serviceId, services.id))
+    .where(
+      and(
+        eq(bookings.tenantId, currentTenant.id),
+        sql`status IN ('confirmed', 'completed')`
+      )
+    );
+
+    return { 
+      revenueByService, 
+      bookingsByStaff, 
+      totalRevenue: totalRevenue?.sum || 0 
+    };
+  })
+
 
 
   .get("/bookings", async ({ currentTenant }: any) => {
@@ -56,14 +102,17 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
     const res = await db.select().from(staffs).where(eq(staffs.tenantId, currentTenant.id)).orderBy(desc(staffs.id));
     return { staffs: res };
   })
+
   .post("/staffs", async ({ currentTenant, body }: any) => {
     const [res] = await db.insert(staffs).values({ tenantId: currentTenant.id, name: body.name }).returning();
     return { staff: res };
   })
+
   .patch("/staffs/:id", async ({ params: { id }, body, currentTenant }: any) => {
     await db.update(staffs).set({ name: body.name }).where(and(eq(staffs.id, Number(id)), eq(staffs.tenantId, currentTenant.id)));
     return { success: true };
   })
+
   .delete("/staffs/:id", async ({ params: { id }, currentTenant }: any) => {
     await db.delete(staffs).where(and(eq(staffs.id, Number(id)), eq(staffs.tenantId, currentTenant.id)));
     return { success: true };
@@ -73,14 +122,26 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
     const res = await db.select().from(services).where(eq(services.tenantId, currentTenant.id)).orderBy(desc(services.id));
     return { services: res };
   })
+
   .post("/services", async ({ currentTenant, body }: any) => {
-    const [res] = await db.insert(services).values({ tenantId: currentTenant.id, name: body.name, price: Number(body.price), durationMinutes: Number(body.durationMinutes) }).returning();
+    const [res] = await db.insert(services).values({ 
+      tenantId: currentTenant.id, 
+      name: body.name, 
+      price: Number(body.price), 
+      durationMinutes: Number(body.durationMinutes) 
+    }).returning();
     return { service: res };
   })
+
   .patch("/services/:id", async ({ params: { id }, body, currentTenant }: any) => {
-    await db.update(services).set({ name: body.name, price: Number(body.price), durationMinutes: Number(body.durationMinutes) }).where(and(eq(services.id, Number(id)), eq(services.tenantId, currentTenant.id)));
+    await db.update(services).set({ 
+      name: body.name, 
+      price: Number(body.price), 
+      durationMinutes: Number(body.durationMinutes) 
+    }).where(and(eq(services.id, Number(id)), eq(services.tenantId, currentTenant.id)));
     return { success: true };
   })
+
   .delete("/services/:id", async ({ params: { id }, currentTenant }: any) => {
     await db.delete(services).where(and(eq(services.id, Number(id)), eq(services.tenantId, currentTenant.id)));
     return { success: true };
@@ -91,7 +152,37 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
       .from(users).innerJoin(bookings, eq(users.id, bookings.customerId)).where(eq(bookings.tenantId, currentTenant.id));
     return { customers: result };
   })
-  .get("/config", async ({ currentTenant }: any) => {
-    return { config: currentTenant };
+
+  .patch("/config", async ({ currentTenant, body, set }: any) => {
+    try {
+      const { name, phone, address } = body;
+      await db.update(tenants)
+        .set({ name, phone, address })
+        .where(eq(tenants.id, currentTenant.id));
+      return { success: true, message: "บันทึกการตั้งค่าแล้ว" };
+    } catch (e) {
+      set.status = 500; return { error: "ไม่สามารถบันทึกได้" };
+    }
+  })
+
+  .post("/config/qr-upload", async ({ currentTenant, body, set }: any) => {
+    try {
+      const { qrFile } = body;
+      if (!qrFile) return { error: "ไม่พบไฟล์" };
+
+      const fileName = `qr-${currentTenant.id}-${Date.now()}.${qrFile.name.split('.').pop()}`;
+      await Bun.write(`uploads/${fileName}`, qrFile);
+      const fileUrl = `http://localhost:3000/uploads/${fileName}`;
+
+      await db.update(tenants)
+        .set({ qrCodeUrl: fileUrl })
+        .where(eq(tenants.id, currentTenant.id));
+
+      return { success: true, qrCodeUrl: fileUrl };
+    } catch (e) {
+      set.status = 500; return { error: "อัปโหลดไม่สำเร็จ" };
+    }
+  }, {
+    body: t.Object({ qrFile: t.File() })
   })
 );

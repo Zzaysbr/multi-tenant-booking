@@ -51,7 +51,7 @@ export default function StaffsPage() {
             <label className="text-sm font-medium">ชื่อพนักงาน</label>
             <input required type="text" value={name} onChange={e => setName(e.target.value)} className="input-warm w-full" placeholder="เช่น ช่างเอก" />
           </div>
-          <button type="submit" className="btn-primary h-[42px] px-6">เพิ่มพนักงาน</button>
+          <button type="submit" className="btn-primary h-10.5 px-6">เพิ่มพนักงาน</button>
         </form>
       </div>
 

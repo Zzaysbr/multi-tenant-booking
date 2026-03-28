@@ -71,7 +71,7 @@ export default function BookingPage() {
           {user && (
             <div className="absolute top-0 right-0 flex items-center gap-2 bg-white/50 p-2 rounded-full border border-primary/10">
               <UserCircle size={20} className="text-primary" />
-              <span className="text-[10px] font-bold text-secondary-foreground truncate max-w-[80px]">{user.name}</span>
+              <span className="text-[10px] font-bold text-secondary-foreground truncate max-w-20">{user.name}</span>
               <button onClick={logout} className="p-1 hover:text-red-500 transition-colors"><LogOut size={14}/></button>
             </div>
           )}

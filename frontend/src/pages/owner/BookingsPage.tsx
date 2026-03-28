@@ -3,9 +3,9 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import { toast } from 'sonner';
 import { 
-  Calendar, Clock, User, Scissors, 
+  Calendar, Clock, Scissors, 
   CheckCircle2, XCircle, ChevronRight, Loader2, Info, 
-  RefreshCcw, Filter, Search, Landmark // ✅ เพิ่ม Landmark icon
+  RefreshCcw, Filter, Landmark
 } from 'lucide-react';
 
 export default function BookingsPage() {
@@ -90,7 +90,7 @@ export default function BookingsPage() {
       {/* --- Table Section --- */}
       <div className="bg-white rounded-card shadow-sm border border-accent/5 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left min-w-[1000px]">
+          <table className="w-full text-left min-w-250">
             <thead className="bg-secondary/30 text-accent text-[10px] uppercase font-black tracking-widest">
               <tr>
                 <th className="px-8 py-5">ข้อมูลลูกค้า</th>

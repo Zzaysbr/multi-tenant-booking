@@ -4,7 +4,7 @@ import api from '../../api/axios';
 import { toast } from 'sonner';
 import { 
   Calendar, Clock, Scissors, User, 
-  CheckCircle2, XCircle, ChevronRight, Loader2, Info, AlertCircle 
+  CheckCircle2, XCircle, ChevronRight, Loader2, AlertCircle 
 } from 'lucide-react';
 
 export default function BookingsPage() {
@@ -75,7 +75,7 @@ export default function BookingsPage() {
       {/* Table */}
       <div className="bg-white rounded-card shadow-sm border border-accent/5 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left min-w-[800px]">
+          <table className="w-full text-left min-w-200">
             <thead className="bg-secondary/30 text-accent text-[10px] uppercase font-black tracking-widest">
               <tr>
                 <th className="px-8 py-5">ลูกค้า / บริการ</th>

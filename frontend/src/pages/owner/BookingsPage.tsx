@@ -125,10 +125,10 @@ export default function BookingsPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <p className="text-sm font-bold text-secondary-foreground flex items-center gap-2">
+                      <div className="text-sm font-bold text-secondary-foreground flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-emerald-500" />
                         {b.staffName}
-                      </p>
+                      </div>
                     </td>
                     <td className="px-8 py-6">
                       <div className="text-sm font-bold text-secondary-foreground space-y-0.5">

@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Kanit", sans-serif;
+  --color-primary: #8E735B;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #F5F2ED;
+  --color-secondary-foreground: #4A3F35;
+  --color-accent: #D4B996;
+  --color-bg: #FAF9F6;
+  --radius-btn: 16px;
+  --radius-card: 24px;
+}
+
+@layer base {
+  body {
+    /* แก้ไขตามคำแนะนำ: ใช้ text-secondary-foreground */
+    @apply bg-bg text-secondary-foreground antialiased selection:bg-accent/30;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-primary text-white rounded-btn font-bold 
+           transition-all duration-300 shadow-sm active:scale-95 
+           flex items-center justify-center gap-2 cursor-pointer
+           hover:brightness-110 hover:shadow-[0_10px_20px_rgba(142,115,91,0.2)];
+  }
+  
+  .input-warm {
+    @apply w-full px-5 py-3.5 bg-white border border-accent/20 rounded-btn 
+           focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary 
+           transition-all placeholder:text-accent/60 text-base;
+  }
+
+  .card-cozy {
+    @apply bg-white p-6 md:p-8 rounded-card border border-accent/5 shadow-[0_15px_40px_rgba(142,115,91,0.05)];
+  }
+}

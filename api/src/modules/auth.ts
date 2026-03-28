@@ -1,70 +1,75 @@
-import { Elysia } from "elysia";
+import Elysia from "elysia";
 import { jwt } from "@elysiajs/jwt";
 import { db } from "../db";
 import { users, tenants } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
-export const authModule = new Elysia({ prefix: '/auth' })
-  .use(
-    jwt({
-      name: 'jwt',
-      secret: process.env.JWT_SECRET!,
-    })
-  )
-  .post("/register", async ({ body, set }) => {
-    const { email, password, name, tenantId } = body as any;
-    const existingUser = await db.select().from(users).where(eq(users.email, email));
-    if (existingUser.length > 0) {
-      set.status = 400;
-      return { error: "Email นี้ถูกใช้งานแล้ว" };
-    }
-    const hashedPassword = await Bun.password.hash(password);
-    const newUser = await db.insert(users).values({
-      email, passwordHash: hashedPassword, name, tenantId, role: "CUSTOMER"
-    }).returning();
-    return { message: "สมัครสมาชิกสำเร็จ", user: newUser[0] };
-  })
-  .post("/login", async ({ body, set, jwt }) => {
-    const { email, password } = body as any;
-    const userResult = await db.select().from(users).where(eq(users.email, email));
-    const user = userResult[0];
-    if (!user) {
-      set.status = 401;
-      return { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
-    }
-    const isMatch = await Bun.password.verify(password, user.passwordHash);
-    if (!isMatch) {
-      set.status = 401;
-      return { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
-    }
-    const token = await jwt.sign({ userId: user.id, role: user.role, tenantId: user.tenantId });
-    return { message: "เข้าสู่ระบบสำเร็จ", token, role: user.role, tenantId: user.tenantId };
-  })
-  .post("/create-shop", async ({ body, set }) => {
-    const { shopName, pathName, email, password, ownerName } = body as any;
-    const existingTenant = await db.select().from(tenants).where(eq(tenants.path_name, pathName));
-    if (existingTenant.length > 0) {
-      set.status = 400;
-      return { error: "ชื่อ URL ร้านนี้มีคนใช้แล้ว โปรดเลือกชื่ออื่น" };
-    }
-    const existingUser = await db.select().from(users).where(eq(users.email, email));
-    if (existingUser.length > 0) {
-      set.status = 400;
-      return { error: "Email นี้ถูกใช้งานแล้ว" };
-    }
+export const authModule = (app: Elysia) => app.group('/auth', (group) => group
+  .use(jwt({ name: 'jwt', secret: process.env.JWT_SECRET || 'super-secret-key' }))
+  
+
+  .post("/login", async ({ body, set, jwt }: any) => {
     try {
-      const result = await db.transaction(async (tx) => {
-        const newTenant = await tx.insert(tenants).values({ name: shopName, path_name: pathName }).returning();
-        const tenantId = newTenant[0].id;
-        const hashedPassword = await Bun.password.hash(password);
-        const newOwner = await tx.insert(users).values({
-          tenantId: tenantId, email: email, passwordHash: hashedPassword, name: ownerName, role: "OWNER"
-        }).returning();
-        return { tenant: newTenant[0], owner: newOwner[0] };
-      });
-      return { message: "เปิดร้านสำเร็จ!", data: result };
-    } catch (error) {
-      set.status = 500;
-      return { error: "เกิดข้อผิดพลาดในการสร้างร้านค้า" };
-    }
-  });
+      const { email, password } = body;
+      const result = await db.select({
+        id: users.id, name: users.name, email: users.email, role: users.role, tenantId: users.tenantId, tenantPath: tenants.path_name, passwordHash: users.passwordHash
+      }).from(users).leftJoin(tenants, eq(users.tenantId, tenants.id)).where(eq(users.email, email)).limit(1);
+
+      const user = result[0];
+      if (!user || !(await Bun.password.verify(password, user.passwordHash))) {
+        set.status = 401; return { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
+      }
+
+      const token = await jwt.sign({ id: user.id, role: user.role, tenantId: user.tenantId });
+      return { message: "เข้าสู่ระบบสำเร็จ", token, user: { id: user.id, name: user.name, email: user.email, role: user.role, tenantPath: user.tenantPath || null } };
+    } catch (e: any) { set.status = 500; return { error: "Server error" }; }
+  })
+
+  
+  .post("/create-shop", async ({ body, set, jwt }: any) => {
+    try {
+      const { shopName, tenantPath, ownerName, email, password } = body;
+      
+      const existingTenant = await db.select().from(tenants).where(eq(tenants.path_name, tenantPath)).limit(1);
+      if (existingTenant.length > 0) { set.status = 400; return { error: "URL ร้านค้านี้มีคนใช้งานแล้ว" }; }
+
+      const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (existingUser.length > 0) { set.status = 400; return { error: "อีเมลนี้มีผู้ใช้งานในระบบแล้ว" }; }
+
+      const passwordHash = await Bun.password.hash(password);
+      const [newTenant] = await db.insert(tenants).values({ name: shopName, path_name: tenantPath }).returning();
+      
+      const [newUser] = await db.insert(users).values({
+        tenantId: newTenant.id, name: ownerName, email: email, passwordHash: passwordHash, role: "OWNER"
+      }).returning();
+
+      const token = await jwt.sign({ id: newUser.id, role: newUser.role, tenantId: newTenant.id });
+      return { message: "สร้างร้านค้าสำเร็จ!", token, user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, tenantPath: newTenant.path_name } };
+    } catch (e: any) { set.status = 500; return { error: "เกิดข้อผิดพลาดในการสร้างร้านค้า" }; }
+  })
+
+  
+  .post("/register", async ({ body, set, jwt }: any) => {
+    try {
+      const { name, email, password } = body;
+
+      const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (existingUser.length > 0) { set.status = 400; return { error: "อีเมลนี้มีผู้ใช้งานในระบบแล้ว" }; }
+
+      const passwordHash = await Bun.password.hash(password);
+      
+      
+      const [newUser] = await db.insert(users).values({
+        name: name, email: email, passwordHash: passwordHash, role: "CUSTOMER"
+      }).returning();
+
+      const token = await jwt.sign({ id: newUser.id, role: newUser.role, tenantId: null });
+      return { message: "สมัครสมาชิกสำเร็จ!", token, user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, tenantPath: null } };
+    } catch (e: any) { set.status = 500; return { error: "เกิดข้อผิดพลาดในการสมัครสมาชิก" }; }
+  })
+
+  .get("/shops", async () => {
+    const allShops = await db.select().from(tenants).orderBy(desc(tenants.id));
+    return { shops: allShops };
+  })
+);

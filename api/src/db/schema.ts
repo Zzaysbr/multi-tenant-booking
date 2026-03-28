@@ -19,6 +19,7 @@ export const users = pgTable("users", {
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   role: roleEnum("role").default("CUSTOMER").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
+  lineUserId: varchar("line_user_id", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

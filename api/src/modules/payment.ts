@@ -1,36 +1,47 @@
-import { Elysia } from "elysia";
+import Elysia, { t } from "elysia";
 import { db } from "../db";
-import { payments, bookings } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { payments } from "../db/schema";
 
-export const paymentModule = new Elysia({ prefix: '/payments' })
-  .post("/:bookingId/slip", async ({ params: { bookingId }, body, set }: any) => {
-    const { slip } = body;
-    if (!slip) {
-      set.status = 400;
-      return { error: "กรุณาแนบไฟล์สลิป" };
-    }
-    const fileName = `slip_${bookingId}_${Date.now()}.${slip.type.split('/')[1] || 'png'}`;
-    const filePath = `./uploads/${fileName}`; 
-    await Bun.write(filePath, slip);
-    const newPayment = await db.insert(payments).values({
-      bookingId: Number(bookingId), method: 'slip', slipUrl: `/uploads/${fileName}`, status: 'pending' 
-    }).returning();
-    return { message: "อัปโหลดสลิปสำเร็จ รอยืนยันจากร้านค้า", payment: newPayment[0] };
-  })
-  .post("/:bookingId/credit-card", async ({ params: { bookingId }, body, set }: any) => {
-     const { cardNumber } = body as any;
-     const isSuccess = Math.random() > 0.2;
+export const paymentModule = (app: Elysia) => app.group('/payments', (group) => group
+  .post("/submit", async ({ body, set }: any) => {
+    try {
+      const { bookingId, method, slipFile } = body;
 
-     if (!isSuccess) {
-        await db.insert(payments).values({ bookingId: Number(bookingId), method: 'credit_card', status: 'failed' });
+      if (!slipFile) {
         set.status = 400;
-        return { error: "จำลองการตัดบัตรล้มเหลว (Failed) กรุณาลองใหม่" };
-     }
+        return { error: "ไม่พบไฟล์สลิป" };
+      }
 
-     await db.transaction(async (tx) => {
-        await tx.insert(payments).values({ bookingId: Number(bookingId), method: 'credit_card', status: 'paid' });
-        await tx.update(bookings).set({ status: 'confirmed' }).where(eq(bookings.id, Number(bookingId)));
-     });
-     return { message: "ชำระเงินผ่านบัตรสำเร็จ! ระบบยืนยันคิวให้คุณแล้ว (Paid -> Confirmed)" };
-  });
+      
+      const fileName = `slip-${bookingId}-${Date.now()}.${slipFile.name.split('.').pop()}`;
+      await Bun.write(`uploads/${fileName}`, slipFile);
+      
+      
+      const fileUrl = `http://localhost:3000/uploads/${fileName}`;
+
+      
+      const [newPayment] = await db.insert(payments).values({
+        bookingId: Number(bookingId),
+        method: method || 'Bank Transfer',
+        slipUrl: fileUrl,
+        status: 'pending'
+      }).returning();
+
+      return { 
+        success: true, 
+        message: "อัปโหลดหลักฐานการโอนเรียบร้อย", 
+        payment: newPayment 
+      };
+    } catch (e: any) {
+      console.error("Upload Error:", e);
+      set.status = 500;
+      return { error: "เกิดข้อผิดพลาดในการบันทึกข้อมูล" };
+    }
+  }, {
+    body: t.Object({
+      bookingId: t.String(),
+      method: t.String(),
+      slipFile: t.File() // รับค่าเป็น File
+    })
+  })
+);

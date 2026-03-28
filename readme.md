@@ -1,0 +1,3 @@
+## Framework
+- bun
+- prisma 

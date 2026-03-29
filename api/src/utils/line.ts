@@ -1,39 +1,5 @@
 // api/src/utils/line.ts
 
-export const sendLinePush = async (token: string | null, toUserId: string | null, flexMessage: any) => {
-  if (!token || !toUserId) {
-    console.log("⚠️ LINE Config missing: Token or UserID is null");
-    return;
-  }
-
-  try {
-    const response = await fetch("https://api.line.me/v2/bot/message/push", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        to: toUserId,
-        messages: [flexMessage],
-      }),
-    });
-
-    const result = await response.json();
-
-    
-    if (response.status !== 200) {
-      console.error("❌ LINE API Error Response:", JSON.stringify(result, null, 2));
-    } else {
-      console.log("✅ LINE Message sent successfully!");
-    }
-
-    return result;
-  } catch (error) {
-    console.error("❌ Network Error while calling LINE API:", error);
-  }
-};
-
 // ดีไซน์การ์ดแจ้งเตือนการจองใหม่ (Flex Message)
 export const createBookingFlex = (customer: string, service: string, date: string, time: string) => ({
   type: "flex",
@@ -62,42 +28,50 @@ export const createBookingFlex = (customer: string, service: string, date: strin
   }
 });
 
+export const sendLinePush = async (token: string | null, toUserId: string | null, flexMessage: any) => {
+  if (!token || !toUserId) return;
 
-export const createPaymentFlex = (bookingId: string, customer: string, amount: number, slipUrl: string) => ({
+  try {
+    const response = await fetch("https://api.line.me/v2/bot/message/push", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({ to: toUserId, messages: [flexMessage] }),
+    });
+    return await response.json();
+  } catch (error) { console.error("LINE API Error:", error); }
+};
+
+
+
+export const createPaymentFlex = (bookingId: string, customer: string, amount: number, slipUrl: string, tenantPath: string) => ({
   type: "flex",
-  altText: "💰 มีแจ้งโอนเงินใหม่เข้ามาครับพี่!",
+  altText: "💰 แจ้งโอนเงินใหม่!",
   contents: {
     type: "bubble",
-    styles: { header: { backgroundColor: "#FDFCFB" } },
+    styles: { header: { backgroundColor: "#4A3728" }, footer: { separator: true } },
     header: {
-      type: "box", layout: "vertical",
-      contents: [
-        { type: "text", text: "PAYMENT RECEIVED", weight: "bold", color: "#10B981", size: "sm", letterSpacing: "0.2em" }
+      type: "box", layout: "vertical", contents: [
+        { type: "text", text: "PAYMENT VERIFICATION", weight: "bold", color: "#B38B6D", size: "xs", letterSpacing: "0.2em" }
       ]
     },
     hero: {
-      type: "image",
-      url: slipUrl, 
-      size: "full", aspectMode: "cover", aspectRatio: "1:1",
-      action: { type: "uri", uri: slipUrl } 
+      type: "image", url: slipUrl, size: "full", aspectMode: "cover", aspectRatio: "1:1"
     },
     body: {
-      type: "box", layout: "vertical", spacing: "md",
-      contents: [
+      type: "box", layout: "vertical", spacing: "md", contents: [
         { type: "text", text: `คุณ ${customer}`, weight: "bold", size: "lg", color: "#4A3728" },
-        {
-          type: "box", layout: "vertical", spacing: "xs",
-          contents: [
-            { type: "box", layout: "baseline", spacing: "sm", contents: [{ type: "text", text: "รายการจอง", color: "#aaaaaa", size: "xs", flex: 2 }, { type: "text", text: `#${bookingId}`, color: "#666666", size: "xs", flex: 5 }] },
-            { type: "box", layout: "baseline", spacing: "sm", contents: [{ type: "text", text: "ยอดโอน", color: "#aaaaaa", size: "xs", flex: 2 }, { type: "text", text: `฿${amount.toLocaleString()}`, color: "#10B981", size: "sm", weight: "bold", flex: 5 }] }
-          ]
-        }
+        { type: "box", layout: "vertical", spacing: "xs", contents: [
+          { type: "box", layout: "baseline", contents: [{ type: "text", text: "Ticket", color: "#aaaaaa", size: "xs", flex: 2 }, { type: "text", text: `#${bookingId}`, color: "#666666", size: "xs", flex: 5 }] },
+          { type: "box", layout: "baseline", contents: [{ type: "text", text: "Amount", color: "#aaaaaa", size: "xs", flex: 2 }, { type: "text", text: `฿${amount.toLocaleString()}`, color: "#B38B6D", size: "md", weight: "bold", flex: 5 }] }
+        ]}
       ]
     },
     footer: {
-      type: "box", layout: "vertical",
-      contents: [
-        { type: "button", style: "primary", color: "#B38B6D", height: "sm", action: { type: "uri", label: "ตรวจสอบในระบบ", uri: `http://localhost:5173/larn1/owner/bookings` } }
+      type: "box", layout: "vertical", contents: [
+        { type: "button", style: "primary", color: "#4A3728", height: "sm", action: { type: "uri", label: "Check System", uri: `${process.env.FRONTEND_URL}/owner/approvals` } }
       ]
     }
   }

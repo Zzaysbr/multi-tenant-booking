@@ -1,7 +1,8 @@
+// src/pages/owner/ReportsPage.tsx
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
-import { BarChart3, TrendingUp, Users, Scissors, DollarSign, Award } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Scissors, DollarSign, Award, Loader2 } from 'lucide-react';
 
 export default function ReportsPage() {
   const { user } = useAuth();
@@ -9,76 +10,80 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get(`/api/${user?.tenantPath}/owner/reports`)
+    if (!user?.tenantPath) return;
+    api.get(`/api/${user.tenantPath}/owner/reports`)
       .then(res => setData(res.data))
+      .catch(() => console.error("Report Fetch Failed"))
       .finally(() => setLoading(false));
   }, [user?.tenantPath]);
 
-  if (loading) return <div className="p-20 text-center italic text-accent animate-pulse">กำลังคำนวณยอดขาย...</div>;
+  if (loading) return (
+    <div className="h-[60vh] flex flex-col items-center justify-center animate-pulse">
+       <Loader2 className="animate-spin text-primary mb-4" />
+       <p className="font-black text-[10px] uppercase tracking-widest text-accent">Calculating Analytics...</p>
+    </div>
+  );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 font-sans">
-      <header>
-        <h1 className="text-3xl font-black text-secondary-foreground flex items-center gap-3">
-          <BarChart3 className="text-primary" size={32} /> รายงานและสถิติ
+    <div className="space-y-12 animate-in fade-in duration-700 font-sans No Italic pb-20">
+      <header className="space-y-2">
+        <h1 className="text-4xl font-black text-primary tracking-tighter uppercase leading-none flex items-center gap-4">
+          <BarChart3 size={36} /> Intelligence
         </h1>
-        <p className="text-accent font-medium mt-1">สรุปภาพรวมรายได้และประสิทธิภาพของร้านคุณ</p>
+        <p className="text-[10px] font-black text-primary/40 uppercase tracking-[0.4em]">Comprehensive revenue and performance analysis</p>
       </header>
 
-      {/* --- Cards Summary --- */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-primary p-8 rounded-[32px] text-white shadow-xl shadow-primary/20 relative overflow-hidden">
-          <DollarSign className="absolute right-[-10px] bottom-[-10px] size-32 opacity-10" />
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Total Revenue</p>
-          <p className="text-4xl font-black mt-2">฿ {data.totalRevenue.toLocaleString()}</p>
-          <div className="mt-4 flex items-center gap-2 text-xs font-bold bg-white/20 w-fit px-3 py-1 rounded-full">
-            <TrendingUp size={14} /> +12% จากเดือนที่แล้ว
+      {/* --- 💰 Summary Cards (High Contrast) --- */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="bg-primary p-10 rounded-card text-white shadow-2xl shadow-primary/20 relative overflow-hidden group">
+          <DollarSign className="absolute right-[-20px] bottom-[-20px] size-44 opacity-5 group-hover:scale-110 transition-transform duration-700" />
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60">Revenue Portfolio</p>
+          <p className="text-5xl font-black mt-4 tracking-tighter">฿{data?.totalRevenue?.toLocaleString()}</p>
+          <div className="mt-6 flex items-center gap-2 text-[10px] font-black bg-white/10 w-fit px-4 py-2 rounded-full uppercase tracking-widest border border-white/5">
+            <TrendingUp size={14} className="text-accent" /> +12.5% Growth Rate
           </div>
         </div>
 
-        <div className="card-cozy p-8! flex flex-col justify-between">
-          <p className="text-[10px] font-black text-accent uppercase tracking-[0.2em]">Top Service</p>
-          <div>
-            <p className="text-2xl font-black text-secondary-foreground truncate">
-              {data.revenueByService[0]?.name || 'N/A'}
+        <div className="card-cozy p-10! flex flex-col justify-between border-stone-100 bg-white">
+          <p className="text-[10px] font-black text-accent uppercase tracking-[0.3em]">Signature Service</p>
+          <div className="space-y-2">
+            <p className="text-2xl font-black text-primary uppercase tracking-tight truncate">
+              {data?.revenueByService?.[0]?.name || 'No Data'}
             </p>
-            <p className="text-xs font-bold text-primary mt-1">
-              ทำเงินได้มากที่สุดในร้าน
-            </p>
+            <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Most Requested Collection</p>
           </div>
         </div>
 
-        <div className="card-cozy p-8! flex flex-col justify-between">
-          <p className="text-[10px] font-black text-accent uppercase tracking-[0.2em]">Busiest Staff</p>
-          <div>
-            <p className="text-2xl font-black text-secondary-foreground">
-              {data.bookingsByStaff[0]?.name || 'N/A'}
+        <div className="card-cozy p-10! flex flex-col justify-between border-stone-100 bg-white">
+          <p className="text-[10px] font-black text-accent uppercase tracking-[0.3em]">Top Talent</p>
+          <div className="space-y-2">
+            <p className="text-2xl font-black text-primary uppercase tracking-tight">
+              {data?.bookingsByStaff?.[0]?.name || 'N/A'}
             </p>
-            <p className="text-xs font-bold text-emerald-600 mt-1">
-              พนักงานที่มีการจองเยอะที่สุด
-            </p>
+            <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Highest Completion Rate</p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* --- รายได้แยกตามบริการ --- */}
-        <div className="card-cozy p-8!">
-          <h3 className="font-black text-secondary-foreground flex items-center gap-2 mb-8 uppercase text-xs tracking-widest">
-            <Scissors size={16} className="text-primary" /> Revenue by Service
-          </h3>
-          <div className="space-y-6">
-            {data.revenueByService.map((s: any, idx: number) => {
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* --- Revenue by Service (Elegant Progress) --- */}
+        <div className="card-cozy p-10! border-stone-100 bg-white shadow-xl shadow-black/[0.02]">
+          <div className="flex items-center gap-3 mb-10">
+             <Scissors size={18} className="text-accent" />
+             <h3 className="text-xs font-black text-primary uppercase tracking-widest">Revenue Distribution</h3>
+          </div>
+          <div className="space-y-8">
+            {data?.revenueByService?.map((s: any, idx: number) => {
               const percentage = (s.totalRevenue / data.totalRevenue) * 100;
               return (
-                <div key={idx} className="space-y-2">
-                  <div className="flex justify-between text-sm font-bold text-secondary-foreground">
-                    <span>{s.name}</span>
-                    <span>฿{Number(s.totalRevenue).toLocaleString()}</span>
+                <div key={idx} className="space-y-3 group">
+                  <div className="flex justify-between items-end">
+                    <span className="text-[11px] font-black text-primary uppercase tracking-wider">{s.name}</span>
+                    <span className="text-xs font-black text-primary">฿{Number(s.totalRevenue).toLocaleString()}</span>
                   </div>
-                  <div className="h-3 bg-secondary/30 rounded-full overflow-hidden">
+                  <div className="h-2 bg-stone-50 rounded-full overflow-hidden border border-stone-100">
                     <div 
-                      className="h-full bg-primary rounded-full transition-all duration-1000" 
+                      className="h-full bg-primary rounded-full transition-all duration-1000 shadow-sm" 
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -88,23 +93,27 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* --- งานแยกตามช่าง --- */}
-        <div className="card-cozy p-8!">
-          <h3 className="font-black text-secondary-foreground flex items-center gap-2 mb-8 uppercase text-xs tracking-widest">
-            <Users size={16} className="text-primary" /> Bookings by Staff
-          </h3>
+        {/* --- Staff Performance (Leaderboard Style) --- */}
+        <div className="card-cozy p-10! border-stone-100 bg-white shadow-xl shadow-black/[0.02]">
+          <div className="flex items-center gap-3 mb-10">
+             <Users size={18} className="text-accent" />
+             <h3 className="text-xs font-black text-primary uppercase tracking-widest">Talent Bookings</h3>
+          </div>
           <div className="space-y-4">
-            {data.bookingsByStaff.map((st: any, idx: number) => (
-              <div key={idx} className="flex items-center justify-between p-4 bg-bg rounded-2xl border border-primary/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-primary font-black">
+            {data?.bookingsByStaff?.map((st: any, idx: number) => (
+              <div key={idx} className="flex items-center justify-between p-5 bg-stone-50/50 rounded-2xl border border-stone-100 transition-all hover:bg-white hover:shadow-md group">
+                <div className="flex items-center gap-4">
+                  <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center shadow-sm text-primary font-black text-sm border border-stone-100 group-hover:bg-primary group-hover:text-white transition-colors">
                     {idx + 1}
                   </div>
-                  <span className="font-bold text-secondary-foreground">{st.name}</span>
+                  <div className="text-left">
+                     <span className="block font-black text-[13px] text-primary uppercase tracking-tight">{st.name}</span>
+                     <span className="text-[8px] font-bold text-muted uppercase tracking-[0.2em]">Verified Staff</span>
+                  </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-lg font-black text-secondary-foreground">{st.count}</span>
-                  <span className="text-[10px] font-bold text-accent ml-1 uppercase">Jobs</span>
+                  <span className="text-xl font-black text-primary">{st.count}</span>
+                  <span className="text-[9px] font-bold text-accent ml-2 uppercase tracking-widest">Tickets</span>
                 </div>
               </div>
             ))}

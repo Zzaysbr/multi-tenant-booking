@@ -4,6 +4,8 @@ import { db } from "../db";
 import { bookings, staffs, services, businessHours, payments, users, tenants } from "../db/schema";
 import { eq, and, ne, lt, gt, desc, sql, asc, or } from "drizzle-orm";
 import { join } from "path";
+// ✅ Import LINE Helpers
+import { createBookingFlex, createPaymentFlex, sendLinePush } from "../utils/line";
 
 export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => group
   
@@ -23,6 +25,7 @@ export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => 
     return { booking: res };
   })
 
+  // ✅ แจ้งเตือนเมื่ออัปโหลดสลิป
   .patch("/:id/payment", async ({ params: { id }, body, currentTenant, set }: any) => {
     if (!currentTenant) { set.status = 404; return { error: "Tenant Not Found" }; }
     try {
@@ -32,6 +35,8 @@ export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => 
       
       await Bun.write(filePath, slipFile);
       const publicUrl = `/uploads/${fileName}`;
+      // สร้าง URL รูปสลิปแบบเต็มสำหรับส่งให้ LINE
+      const fullSlipUrl = `${process.env.BACKEND_URL || 'http://localhost:3000'}${publicUrl}`;
       
       const existing = await db.select().from(payments).where(eq(payments.bookingId, Number(id)));
       if (existing.length > 0) {
@@ -39,6 +44,23 @@ export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => 
       } else {
         await db.insert(payments).values({ bookingId: Number(id), method: 'promptpay', slipUrl: publicUrl, status: 'pending' });
       }
+
+      // 🔔 LINE Notification: แจ้งโอนเงิน
+      const [bInfo] = await db.select({ 
+        customerName: users.name, 
+        serviceName: services.name, 
+        price: services.price 
+      })
+      .from(bookings)
+      .innerJoin(users, eq(bookings.customerId, users.id))
+      .innerJoin(services, eq(bookings.serviceId, services.id))
+      .where(eq(bookings.id, Number(id)));
+
+      if (bInfo && currentTenant.line_channel_token && currentTenant.line_user_id) {
+        const flex = createPaymentFlex(id, bInfo.customerName, bInfo.price, fullSlipUrl, currentTenant.path_name);
+        await sendLinePush(currentTenant.line_channel_token, currentTenant.line_user_id, flex);
+      }
+
       return { success: true };
     } catch (e) {
       set.status = 500; return { error: "Upload Failed" };
@@ -62,6 +84,7 @@ export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => 
     }
   })
 
+  // ✅ แจ้งเตือนเมื่อมีการจองใหม่
   .post("/", async ({ currentTenant, currentUser, body, set }: any) => {
     if (!currentTenant) { set.status = 404; return { error: "Tenant Not Found" }; }
     if (!currentUser) { set.status = 401; return { error: "Login Required" }; }
@@ -72,11 +95,20 @@ export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => 
         serviceId: Number(serviceId), staffId: Number(staffId),
         startTime: new Date(startTime), endTime: new Date(endTime), status: 'pending'
       }).returning();
+
+      // 🔔 LINE Notification: แจ้งรายการจองใหม่
+      const [serviceInfo] = await db.select().from(services).where(eq(services.id, Number(serviceId)));
+      if (serviceInfo && currentTenant.line_channel_token && currentTenant.line_user_id) {
+        const dateStr = new Date(startTime).toLocaleDateString('th-TH');
+        const timeStr = new Date(startTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+        const flex = createBookingFlex(currentUser.name, serviceInfo.name, dateStr, timeStr);
+        await sendLinePush(currentTenant.line_channel_token, currentTenant.line_user_id, flex);
+      }
+
       return { booking: newBooking };
     } catch (e) { set.status = 500; return { error: "Booking Failed" }; }
   })
 
-  // ✅ [MODIFIED] เพิ่ม durationMinutes และ staffId สำหรับใช้คำนวณตอนเลื่อนคิว
   .get("/my-bookings", async ({ currentUser, currentTenant, set }: any) => {
     if (!currentTenant) { set.status = 404; return { error: "Tenant Not Found" }; }
     if (!currentUser) { set.status = 401; return { error: "Unauthorized" }; }
@@ -89,8 +121,8 @@ export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => 
         status: bookings.status,
         startTime: bookings.startTime,
         price: services.price,
-        durationMinutes: services.durationMinutes, // ส่งไปให้หน้าบ้านคำนวณ
-        staffId: bookings.staffId // ต้องใช้เช็คคิวชน
+        durationMinutes: services.durationMinutes,
+        staffId: bookings.staffId
       })
       .from(bookings)
       .innerJoin(services, eq(bookings.serviceId, services.id))
@@ -116,7 +148,6 @@ export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => 
     } catch (e) { set.status = 500; return { error: "Cancel Failed" }; }
   })
 
-  // ✅ [NEW] Route สำหรับ "เลื่อนคิว" (Reschedule)
   .patch("/:id/reschedule", async ({ params: { id }, body, currentUser, currentTenant, set }: any) => {
     if (!currentTenant || !currentUser) { set.status = 401; return { error: "Unauthorized" }; }
     try {
@@ -124,16 +155,14 @@ export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => 
       const start = new Date(newStartTime);
       const end = new Date(newEndTime);
 
-      // ดึงข้อมูลคิวเดิมมาเช็คว่าช่างคนเดิมว่างไหม
       const [target] = await db.select().from(bookings).where(eq(bookings.id, Number(id)));
       if (!target) { set.status = 404; return { error: "Booking not found" }; }
 
-      // เช็คเวลาชนกัน
       const overlap = await db.select().from(bookings).where(
         and(
           eq(bookings.tenantId, currentTenant.id),
           eq(bookings.staffId, target.staffId),
-          ne(bookings.id, Number(id)), // ยกเว้นตัวเอง
+          ne(bookings.id, Number(id)),
           ne(bookings.status, 'canceled'),
           lt(bookings.startTime, end),
           gt(bookings.endTime, start)
@@ -144,7 +173,6 @@ export const bookingModule = (app: Elysia) => app.group('/bookings', (group) => 
         set.status = 409; return { error: "เวลานี้คิวเต็มแล้วครับ กรุณาเลือกใหม่" };
       }
 
-      // อัปเดตเวลา และปรับสถานะกลับเป็น pending (รอโอนเงินใหม่/รอยืนยันใหม่)
       await db.update(bookings).set({ startTime: start, endTime: end, status: 'pending' })
         .where(eq(bookings.id, Number(id)));
 

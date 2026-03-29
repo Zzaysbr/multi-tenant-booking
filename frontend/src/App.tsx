@@ -1,9 +1,11 @@
+// src/App.tsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from 'sonner';
 
 import AdminDashboard from './pages/admin/AdminDashboard';
+import CreateShopPage from './pages/owner/CreateShopPage'; // ✅ เพิ่ม Import
 
 // Owner Pages
 import OverviewPage from './pages/owner/OverviewPage';
@@ -54,6 +56,7 @@ function App() {
           {/* --- Protected Owner Routes --- */}
           <Route path="/owner" element={<MainLayout />}>
             <Route path="dashboard" element={<OverviewPage />} />
+            <Route path="create-shop" element={<CreateShopPage />} />
             <Route path="bookings" element={<BookingsPage />} />
             <Route path="staffs" element={<StaffsPage />} />
             <Route path="services" element={<ServicesPage />} />

@@ -26,7 +26,7 @@ export default function ResetPassword() {
     setLoading(true);
     try {
       // ✅ ส่ง Token และ Password ใหม่ไปที่ Backend
-      await api.patch('/auth/reset-password', { 
+      await api.post('/auth/reset-password', { 
         token, 
         newPassword: passwords.password 
       });

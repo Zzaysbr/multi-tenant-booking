@@ -46,7 +46,6 @@ const app = new Elysia()
   // --- Global Auth Routes (ไม่ต้องมี tenantPath) ---
   .use(authModule)  
   .use(userRoutes)  
-
   .use(adminModule)
 
   // --- Tenant Specific Routes ---

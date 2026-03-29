@@ -1,6 +1,6 @@
 // src/components/layouts/MainLayout.tsx
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'; // ✅ เพิ่ม useNavigate
 import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutGrid, Calendar, Users, Scissors, 
@@ -9,12 +9,21 @@ import {
 } from 'lucide-react';
 import { getFullImageUrl } from '../../utils/image';
 
-
 export default function MainLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate(); // ✅ ประกาศใช้ navigate
   const { logout, user } = useAuth();
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // ✅ [NEW] ดักทาง Owner ที่ยังไม่มีร้าน
+  useEffect(() => {
+    if (user && user.role === 'OWNER' && !user.tenantPath) {
+      if (location.pathname !== '/owner/create-shop') {
+        navigate('/owner/create-shop');
+      }
+    }
+  }, [user, navigate, location.pathname]);
 
   const menuItems = [
     { icon: <LayoutGrid size={20} />, label: 'Dashboard', path: '/owner/dashboard' },

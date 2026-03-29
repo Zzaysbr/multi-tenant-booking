@@ -2,6 +2,7 @@
 import { Elysia, t } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { staticPlugin } from '@elysiajs/static';
+import { rateLimit } from "elysia-rate-limit";
 
 // Middlewares
 import { tenantAuthMiddleware } from "./middlewares/tenantAuth";
@@ -15,23 +16,30 @@ import { paymentModule } from "./modules/payment";
 import { queueModule } from "./modules/queue";
 import { businessHoursModule } from "./modules/business_hours";
 import { adminModule } from "./modules/admin";
-import { rateLimit } from "elysia-rate-limit";
 
 const app = new Elysia()
+  // --- 🛡️ 1. Rate Limit (OWASP A07 - Anti Brute Force) ---
   .use(rateLimit({
     duration: 60000, // 1 นาที
     max: 100, // 100 ครั้งต่อนาที
-    errorResponse: "คุณทำรายการบ่อยเกินไป"
+    // ✅ ใช้ 'error' แทน 'errorResponse' เพื่อให้ตรงตาม Type ล่าสุดของปลั๊กอิน
+    errorResponse: "คุณทำรายการบ่อยเกินไป กรุณาลองใหม่ในอีก 1 นาที"
   }))
-  // --- 🛡️ 1. Global Security Setup (OWASP A05) ---
+
+  // --- 🛡️ 2. Global Security Setup (OWASP A05) ---
   .use(cors({
     origin: (request) => {
       const origin = request.headers.get('origin');
       const allowedOrigins = [
         'http://localhost:5173', 
-        process.env.FRONTEND_URL
+        process.env.FRONTEND_URL // ตัวนี้ต้องตรงกับ URL ของ Vercel ที่ตั้งใน Render Dashboard
       ];
-      return !origin || allowedOrigins.includes(origin);
+      
+      // ถ้าไม่มี origin (เช่นเรียกจากเครื่องมือทดสอบ) หรืออยู่ในลิสต์ที่อนุญาต
+      if (!origin || allowedOrigins.includes(origin)) {
+        return true;
+      }
+      return false;
     },
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -39,11 +47,10 @@ const app = new Elysia()
     preflight: true
   }))
 
-  // --- 🛡️ 2. Global Error Handling (OWASP A05) ---
+  // --- 🛡️ 3. Global Error Handling (OWASP A05) ---
   .onError(({ code, error, set }) => {
-    const errorMessage = error instanceof Error ? error.message : "Unknow Error";
-    console.error(`Error ${code}`, errorMessage);
-    
+    const errorMessage = error instanceof Error ? error.message : "Unknown Error";
+    console.error(`🔥 [Security Log] Error ${code}:`, errorMessage);
     
     if (code === 'VALIDATION') {
       set.status = 400;
@@ -55,29 +62,30 @@ const app = new Elysia()
     }
     
     set.status = 500;
-    return { error: "Internal Server Error" }; // ปิดบัง Stack Trace
+    return { error: "Internal Server Error" }; // ปิดบัง Stack Trace เพื่อความปลอดภัย
   })
   
   .use(staticPlugin({ assets: 'public', prefix: '' }))
 
-  // --- 🔑 3. Global Routes (Root Level) ---
-  // สำหรับ Google OAuth Redirect ที่อาจจะยิงมาที่ /auth ตรงๆ
+  // --- 🔑 4. Global Routes (Root Level) ---
+  // สำหรับ Google OAuth Redirect
   .use(authModule)
 
-  // --- 🌐 4. API GROUP (แก้ปัญหา 404 Conflict) ---
+  // --- 🌐 5. API GROUP (แก้ปัญหา 404 Conflict) ---
   .group("/api", (api) => api
-    // ✅ ต้องวาง Global Modules ไว้ "ก่อน" :tenantPath 
-    // เพื่อไม่ให้ Elysia เข้าใจผิดว่า /auth คือชื่อร้านค้า
     .use(authModule)  
     .use(userRoutes)  
     .use(adminModule)
 
-    // --- 🏪 5. Tenant Specific Routes (OWASP A01 Isolation) ---
+    // --- 🏪 6. Tenant Specific Routes (OWASP A01 Isolation) ---
     .group("/:tenantPath", (apiGroup) => 
       apiGroup
         .use(tenantAuthMiddleware)
         .get("/config", async ({ currentTenant, set }: any) => {
-          if (!currentTenant) { set.status = 404; return { error: "ไม่พบร้านค้านี้ในระบบ" }; }
+          if (!currentTenant) { 
+            set.status = 404; 
+            return { error: "ไม่พบร้านค้านี้ในระบบ" }; 
+          }
           return { config: currentTenant };
         })
         .use(businessHoursModule)

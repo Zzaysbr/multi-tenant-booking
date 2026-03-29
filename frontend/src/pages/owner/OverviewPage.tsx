@@ -25,8 +25,8 @@ export default function OverviewPage() {
       if (!user?.tenantPath) return;
       try {
         const [reportRes, statsRes] = await Promise.all([
-          api.get(`/api/${user.tenantPath}/owner/reports`),
-          api.get(`/api/${user.tenantPath}/owner/stats`)
+          api.get(`/${user.tenantPath}/owner/reports`),
+          api.get(`/${user.tenantPath}/owner/stats`)
         ]);
         setData(reportRes.data);
         setStats(statsRes.data.stats);

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
-import { BarChart3, TrendingUp, Users, Scissors, DollarSign, Award, Loader2 } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Scissors, DollarSign, Loader2 } from 'lucide-react';
 
 export default function ReportsPage() {
   const { user } = useAuth();
@@ -36,7 +36,7 @@ export default function ReportsPage() {
       {/* --- 💰 Summary Cards (High Contrast) --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="bg-primary p-10 rounded-card text-white shadow-2xl shadow-primary/20 relative overflow-hidden group">
-          <DollarSign className="absolute right-[-20px] bottom-[-20px] size-44 opacity-5 group-hover:scale-110 transition-transform duration-700" />
+          <DollarSign className="absolute -right-5 -bottom-5 size-44 opacity-5 group-hover:scale-110 transition-transform duration-700" />
           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60">Revenue Portfolio</p>
           <p className="text-5xl font-black mt-4 tracking-tighter">฿{data?.totalRevenue?.toLocaleString()}</p>
           <div className="mt-6 flex items-center gap-2 text-[10px] font-black bg-white/10 w-fit px-4 py-2 rounded-full uppercase tracking-widest border border-white/5">
@@ -67,7 +67,7 @@ export default function ReportsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* --- Revenue by Service (Elegant Progress) --- */}
-        <div className="card-cozy p-10! border-stone-100 bg-white shadow-xl shadow-black/[0.02]">
+        <div className="card-cozy p-10! border-stone-100 bg-white shadow-xl shadow-black/2">
           <div className="flex items-center gap-3 mb-10">
              <Scissors size={18} className="text-accent" />
              <h3 className="text-xs font-black text-primary uppercase tracking-widest">Revenue Distribution</h3>
@@ -94,7 +94,7 @@ export default function ReportsPage() {
         </div>
 
         {/* --- Staff Performance (Leaderboard Style) --- */}
-        <div className="card-cozy p-10! border-stone-100 bg-white shadow-xl shadow-black/[0.02]">
+        <div className="card-cozy p-10! border-stone-100 bg-white shadow-xl shadow-black/2">
           <div className="flex items-center gap-3 mb-10">
              <Users size={18} className="text-accent" />
              <h3 className="text-xs font-black text-primary uppercase tracking-widest">Talent Bookings</h3>

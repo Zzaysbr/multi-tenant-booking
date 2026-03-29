@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import CustomerNavbar from '../../components/layouts/CustomerNavbar';
 import { toast } from 'sonner';
-import { Calendar, Clock, User, ChevronRight, Loader2, Sparkles, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Loader2, Sparkles, ArrowLeft } from 'lucide-react';
 
 export default function BookingPage() {
   const { tenantPath } = useParams();
@@ -95,7 +95,7 @@ export default function BookingPage() {
             <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent flex items-center gap-2">02. Select Professional</h2>
             <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">{staffs.map(st => (
               <button key={st.id} onClick={() => { setSelStaff(st); setSelTime(''); }} className={`shrink-0 flex flex-col items-center gap-4 px-10 py-10 rounded-card border-2 transition-all ${selStaff?.id === st.id ? 'bg-secondary border-accent shadow-sm' : 'bg-white border-stone-50'}`}>
-                <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center font-black text-xl ${selStaff?.id === st.id ? 'bg-primary text-white scale-110 shadow-lg' : 'bg-stone-50 text-stone-300'}`}>{st.name.charAt(0)}</div>
+                <div className={`w-16 h-16 rounded-3xl flex items-center justify-center font-black text-xl ${selStaff?.id === st.id ? 'bg-primary text-white scale-110 shadow-lg' : 'bg-stone-50 text-stone-300'}`}>{st.name.charAt(0)}</div>
                 <span className="text-[11px] font-black uppercase tracking-widest">{st.name}</span>
               </button>
             ))}</div>
@@ -118,9 +118,9 @@ export default function BookingPage() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 p-6 z-50">
-        <div className="max-w-5xl mx-auto bg-primary rounded-[36px] p-6 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10 backdrop-blur-xl">
+        <div className="max-w-5xl mx-auto bg-primary rounded-card p-6 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10 backdrop-blur-xl">
            <div className="flex items-center gap-6"><div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-accent"><Sparkles size={24}/></div><div><p className="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-1">Total Amount</p><p className="text-3xl font-black text-white tracking-tighter">฿{selService?.price || '0'}</p></div></div>
-           <button disabled={!selTime || submitting} onClick={confirm} className="w-full md:w-auto px-16 py-6 bg-accent text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-white hover:text-primary transition-all disabled:opacity-20">{submitting ? <Loader2 className="animate-spin" /> : "Confirm Reservation"}</button>
+           <button disabled={!selTime || submitting} onClick={confirm} className="w-full md:w-auto px-16 py-6 bg-accent text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-white hover:text-primary transition-all disabled:opacity-20">{submitting ? <Loader2 className="animate-spin" /> : "Confirm Reservation"}</button>
         </div>
       </div>
     </div>

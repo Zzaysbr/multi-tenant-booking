@@ -1,6 +1,6 @@
-// src/components/layouts/MainLayout.tsx
-import { useState, useEffect, useRef } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'; // ✅ เพิ่ม useNavigate
+
+import { useState, useEffect } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'; 
 import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutGrid, Calendar, Users, Scissors, 
@@ -12,11 +12,9 @@ import { getFullImageUrl } from '../../utils/image';
 export default function MainLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate(); // ✅ ประกาศใช้ navigate
+  const navigate = useNavigate();
   const { logout, user } = useAuth();
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  // ✅ [NEW] ดักทาง Owner ที่ยังไม่มีร้าน
   useEffect(() => {
     if (user && user.role === 'OWNER' && !user.tenantPath) {
       if (location.pathname !== '/owner/create-shop') {
@@ -39,7 +37,7 @@ export default function MainLayout() {
     <div className="min-h-screen bg-[#FDFCFB] flex font-sans No Italic selection:bg-accent/20">
       
       {/* --- 📟 Sidebar (Elevated Design) --- */}
-      <aside className={`bg-white border-r border-stone-100 transition-all duration-500 flex flex-col fixed h-full z-50 shadow-2xl shadow-black/[0.02] ${isCollapsed ? 'w-20' : 'w-72'}`}>
+      <aside className={`bg-white border-r border-stone-100 transition-all duration-500 flex flex-col fixed h-full z-50 shadow-2xl shadow-black/2 ${isCollapsed ? 'w-20' : 'w-72'}`}>
         
         <div className="p-6 h-24 flex items-center justify-between">
           {!isCollapsed && (

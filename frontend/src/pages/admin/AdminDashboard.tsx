@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { 
   ShieldCheck, Store, Users, Calendar, 
-  Loader2, Trash2, Database, ShieldAlert,
+  Trash2, Database, ShieldAlert,
   UserCog
 } from 'lucide-react';
 
@@ -110,17 +110,17 @@ export default function AdminDashboard() {
         {/* --- 📊 TAB 1: OVERVIEW --- */}
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
-            <div className="bg-slate-900 p-10 rounded-[32px] text-white shadow-2xl relative overflow-hidden">
-               <Store className="absolute right-[-10px] bottom-[-10px] size-40 opacity-5" />
+            <div className="bg-slate-900 p-10 rounded-4xl text-white shadow-2xl relative overflow-hidden">
+               <Store className="absolute -right-2.5 -bottom-2.5 size-40 opacity-5" />
                <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60">Total Tenants</p>
                <p className="text-6xl font-black mt-2 tracking-tighter">{stats?.totalShops || 0}</p>
             </div>
-            <div className="bg-white p-10 rounded-[32px] shadow-sm border border-stone-100">
+            <div className="bg-white p-10 rounded-4xl shadow-sm border border-stone-100">
                <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl w-fit mb-6"><Users size={24}/></div>
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Registered Users</p>
                <p className="text-4xl font-black text-slate-900 tracking-tighter mt-1">{stats?.totalUsers || 0}</p>
             </div>
-            <div className="bg-white p-10 rounded-[32px] shadow-sm border border-stone-100">
+            <div className="bg-white p-10 rounded-4xl shadow-sm border border-stone-100">
                <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl w-fit mb-6"><Calendar size={24}/></div>
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Platform Bookings</p>
                <p className="text-4xl font-black text-slate-900 tracking-tighter mt-1">{stats?.totalBookings || 0}</p>
@@ -130,7 +130,7 @@ export default function AdminDashboard() {
 
         {/* --- 🏢 TAB 2: TENANTS MANAGEMENT --- */}
         {activeTab === 'shops' && (
-          <div className="bg-white rounded-[32px] border border-stone-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
+          <div className="bg-white rounded-4xl border border-stone-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
             <div className="p-8 border-b border-stone-100 bg-stone-50 flex justify-between items-center">
               <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">Active Stores</h3>
             </div>
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
 
         {/* --- 👥 TAB 3: USERS ACCESS CONTROL --- */}
         {activeTab === 'users' && (
-          <div className="bg-white rounded-[32px] border border-stone-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
+          <div className="bg-white rounded-4xl border border-stone-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
             <div className="p-8 border-b border-stone-100 bg-stone-50 flex justify-between items-center">
               <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">Platform Accounts</h3>
               <ShieldAlert size={18} className="text-amber-500" />

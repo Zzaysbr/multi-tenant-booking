@@ -217,7 +217,7 @@ export default function MyBookingsPage() {
 
       {/* --- 🔄 Modal เลื่อนคิว (Reschedule Modal) --- */}
       {rescheduleData && (
-        <div className="fixed inset-0 z-[100] bg-primary/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
+        <div className="fixed inset-0 z-100 bg-primary/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
           <div className="bg-white rounded-card w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
             <header className="p-8 border-b border-stone-100 bg-stone-50 flex justify-between items-center">
               <div>
@@ -270,7 +270,7 @@ function StatusBadge({ status }: any) {
     canceled: { label: 'ยกเลิกแล้ว', icon: <XCircle size={12}/>, color: 'bg-rose-50 text-rose-500 border-rose-100' }
   };
   const { label, icon, color } = c[status] || c.pending;
-  return <div className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border flex items-center gap-2 inline-flex ${color}`}>{icon} {label}</div>;
+  return <div className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border flex items-center gap-2 ${color}`}>{icon} {label}</div>;
 }
 
 function getStatusColor(s: string) {

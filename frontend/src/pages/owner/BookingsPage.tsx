@@ -64,7 +64,7 @@ export default function BookingsPage() {
         {bookings.map((b) => (
           <div key={b.id} className="card-cozy flex flex-col lg:flex-row justify-between gap-8 border-stone-100 hover:border-accent/20">
             <div className="flex-1 flex gap-6">
-               <div className="w-16 h-16 bg-secondary rounded-[24px] flex items-center justify-center text-primary shrink-0"><User size={24} /></div>
+               <div className="w-16 h-16 bg-secondary rounded-3xl flex items-center justify-center text-primary shrink-0"><User size={24} /></div>
                <div className="space-y-4">
                   <div>
                     {/* ✅ ใช้ customerName ตามที่ Backend ส่งมา */}
@@ -79,7 +79,7 @@ export default function BookingsPage() {
                </div>
             </div>
 
-            <div className="flex flex-row lg:flex-col justify-between items-end gap-4 min-w-[200px] border-t lg:border-t-0 lg:border-l border-stone-50 pt-6 lg:pt-0 lg:pl-8">
+            <div className="flex flex-row lg:flex-col justify-between items-end gap-4 min-w-50 border-t lg:border-t-0 lg:border-l border-stone-50 pt-6 lg:pt-0 lg:pl-8">
                <StatusBadge status={b.status} />
                <div className="flex gap-3">
                  {b.slipUrl ? (
@@ -96,7 +96,7 @@ export default function BookingsPage() {
       </div>
 
       {selectedSlip && (
-        <div className="fixed inset-0 bg-primary/90 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
+        <div className="fixed inset-0 bg-primary/90 backdrop-blur-xl z-100 flex items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
            <div className="relative max-w-lg w-full bg-white rounded-card overflow-hidden shadow-2xl">
               <header className="p-6 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                 <h3 className="font-black text-primary uppercase tracking-widest text-sm">ตรวจสอบหลักฐานการโอน</h3>

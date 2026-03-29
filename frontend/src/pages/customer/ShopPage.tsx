@@ -31,7 +31,7 @@ export default function ShopPage() {
         <div className="relative h-[60vh] rounded-card overflow-hidden shadow-premium group">
           {/* ✅ ใช้ getFullImageUrl */}
           <img src={getFullImageUrl(shop?.logo_url) || "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=1000"} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[3s]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/95 via-primary/20 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-primary/95 via-primary/20 to-transparent" />
           <div className="absolute bottom-12 left-12 right-12 text-white space-y-6">
             <div className="flex items-center gap-4"><span className="badge-cafe bg-accent text-white border-none shadow-lg">Premier Experience</span><div className="flex text-yellow-400">{[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor"/>)}</div></div>
             <h1 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8]">{shop?.name || tenantPath}</h1>

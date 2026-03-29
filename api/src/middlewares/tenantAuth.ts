@@ -1,3 +1,4 @@
+// api/src/middlewares/tenantAuth.ts
 import Elysia from "elysia";
 import { jwt } from "@elysiajs/jwt";
 import { db } from "../db";
@@ -10,6 +11,7 @@ export const tenantAuthMiddleware = (app: Elysia) => app
     try {
       let tenantPath = params?.tenantPath as string | undefined;
       
+      // Fallback path detection
       if (!tenantPath) {
         const url = new URL(request.url);
         const segments = url.pathname.split('/');
@@ -19,7 +21,9 @@ export const tenantAuthMiddleware = (app: Elysia) => app
 
       if (!tenantPath) return { currentTenant: null, currentUser: null };
 
+      // ดึงข้อมูล Tenant
       const [tenant] = await db.select().from(tenants).where(eq(tenants.path_name, tenantPath)).limit(1);
+      if (!tenant) return { currentTenant: null, currentUser: null };
 
       let currentUser = null;
       const authHeader = request.headers.get('authorization');
@@ -29,20 +33,23 @@ export const tenantAuthMiddleware = (app: Elysia) => app
         const payload = await jwt.verify(token);
 
         if (payload && typeof payload.id === 'number') {
-          currentUser = {
-            id: payload.id,
-            email: payload.email,
-            role: payload.role,
-            tenantId: payload.tenantId
-          };
+          // 🛡️ OWASP A01: ตรวจสอบว่าถ้าเป็น OWNER/STAFF ต้องเป็นของ Tenant นี้จริงหรือไม่
+          const isBelongToTenant = payload.tenantId === null || payload.tenantId === tenant.id;
+          
+          if (isBelongToTenant) {
+            currentUser = {
+              id: payload.id,
+              email: payload.email,
+              role: payload.role,
+              tenantId: payload.tenantId
+            };
+          }
         }
       }
 
-      return { 
-        currentTenant: tenant || null, 
-        currentUser: currentUser || null };
+      return { currentTenant: tenant, currentUser: currentUser };
     } catch (err) {
-      console.error("Auth middle ware Error:", err);
+      console.error("Auth Middleware Error:", err);
       return { currentTenant: null, currentUser: null };
     }
   });

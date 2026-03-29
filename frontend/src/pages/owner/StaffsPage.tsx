@@ -78,7 +78,7 @@ export default function StaffsPage() {
               <UserCircle className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300" size={20} />
             </div>
           </div>
-          <button type="submit" className="btn-boutique-primary w-full md:w-auto h-[62px] px-12 text-[11px] shadow-premium cursor-pointer">
+          <button type="submit" className="btn-boutique-primary w-full md:w-auto h-15.5 px-12 text-[11px] shadow-premium cursor-pointer">
             <UserPlus size={18} /> Add Talent
           </button>
         </form>

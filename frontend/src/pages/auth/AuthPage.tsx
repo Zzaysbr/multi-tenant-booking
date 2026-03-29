@@ -1,11 +1,11 @@
 // src/pages/auth/AuthPage.tsx
-import { useState } from 'react';
+import { useState, useMemo } from 'react'; // ✅ เพิ่ม useMemo
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { 
   User, Loader2, Mail, Lock, LayoutGrid,
-  Eye, EyeOff, Zap, LogIn, UserPlus
+  Eye, EyeOff, Zap, LogIn, UserPlus, Check, X // ✅ เพิ่ม Check, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,17 +21,33 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', shopName: '', tenantPath: '' });
 
+  // ✅ [NEW] Password Validation Logic
+  const passwordStatus = useMemo(() => {
+    const hasMinLength = formData.password.length >= 8;
+    const hasNumber = /\d/.test(formData.password);
+    return {
+      hasMinLength,
+      hasNumber,
+      isValid: hasMinLength && hasNumber
+    };
+  }, [formData.password]);
+
   const handleGoogleLogin = () => {
     const callbackPath = from ? encodeURIComponent(from) : '';
-    
     const rawApiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
     const backendRoot = rawApiUrl.replace('/api', '');
-    
     window.location.href = `${backendRoot}/auth/google?redirect=${callbackPath}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // ✅ กันเหนียว: ถ้าสมัครสมาชิกแล้วรหัสไม่ผ่านเกณฑ์ ไม่ต้องยิง API
+    if (mode === 'register' && !passwordStatus.isValid) {
+      toast.error("กรุณาตั้งรหัสผ่านให้ตรงตามเงื่อนไขความปลอดภัย");
+      return;
+    }
+
     setLoading(true);
     try {
       const endpoint = mode === 'login' ? '/auth/login' : (role === 'OWNER' ? '/auth/create-shop' : '/auth/register');
@@ -160,6 +176,20 @@ export default function AuthPage() {
                     {showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
                   </button>
                 </div>
+
+                {/* ✅ [NEW] Password Strength Indicators (เฉพาะตอน Register) */}
+                {mode === 'register' && (
+                  <div className="px-2 pt-2 space-y-2">
+                    <div className="flex items-center gap-2 transition-colors duration-300">
+                      {passwordStatus.hasMinLength ? <Check size={12} className="text-green-500" /> : <X size={12} className="text-stone-300" />}
+                      <span className={`text-[9px] font-black uppercase tracking-widest ${passwordStatus.hasMinLength ? 'text-primary' : 'text-stone-300'}`}>อย่างน้อย 8 ตัวอักษร</span>
+                    </div>
+                    <div className="flex items-center gap-2 transition-colors duration-300">
+                      {passwordStatus.hasNumber ? <Check size={12} className="text-green-500" /> : <X size={12} className="text-stone-300" />}
+                      <span className={`text-[9px] font-black uppercase tracking-widest ${passwordStatus.hasNumber ? 'text-primary' : 'text-stone-300'}`}>ต้องมีตัวเลขประกอบ</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {mode === 'register' && role === 'OWNER' && (
@@ -179,7 +209,11 @@ export default function AuthPage() {
               )}
             </div>
 
-            <button disabled={loading} type="submit" className="btn-boutique-primary w-full py-6 text-sm shadow-premium cursor-pointer">
+            <button 
+              disabled={loading || (mode === 'register' && !passwordStatus.isValid)} 
+              type="submit" 
+              className={`btn-boutique-primary w-full py-6 text-sm shadow-premium cursor-pointer transition-opacity ${(mode === 'register' && !passwordStatus.isValid) ? 'opacity-50 grayscale cursor-not-allowed' : 'opacity-100'}`}
+            >
               {loading ? <Loader2 className="animate-spin" /> : (
                 <div className="flex items-center justify-center gap-3">
                   {mode === 'login' ? <LogIn size={18}/> : <UserPlus size={18}/>}
@@ -206,14 +240,14 @@ export default function AuthPage() {
   );
 }
 
-function GuideItem({ icon, title, desc }: any) {
-  return (
-    <div className="flex items-start gap-5">
-      <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-accent shrink-0">{icon}</div>
-      <div className="space-y-1">
-        <h4 className="text-sm font-black text-white uppercase tracking-wider">{title}</h4>
-        <p className="text-xs font-bold text-white/60 leading-relaxed uppercase tracking-tight">{desc}</p>
-      </div>
-    </div>
-  );
-}
+// function GuideItem({ icon, title, desc }: any) {
+//   return (
+//     <div className="flex items-start gap-5">
+//       <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-accent shrink-0">{icon}</div>
+//       <div className="space-y-1">
+//         <h4 className="text-sm font-black text-white uppercase tracking-wider">{title}</h4>
+//         <p className="text-xs font-bold text-white/60 leading-relaxed uppercase tracking-tight">{desc}</p>
+//       </div>
+//     </div>
+//   );
+// }

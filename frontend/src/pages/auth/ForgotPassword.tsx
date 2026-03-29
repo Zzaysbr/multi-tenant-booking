@@ -1,6 +1,5 @@
-// src/pages/auth/ForgotPassword.tsx
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { toast } from 'sonner';
 import { Mail, ArrowLeft, ShieldCheck, Loader2, Sparkles } from 'lucide-react';
@@ -32,7 +31,7 @@ export default function ForgotPassword() {
         
         {/* Logo Section */}
         <div className="text-center space-y-4">
-          <div className="inline-flex w-16 h-16 bg-primary rounded-[24px] items-center justify-center text-accent shadow-premium mb-2">
+          <div className="inline-flex w-16 h-16 bg-primary rounded-3xl items-center justify-center text-accent shadow-premium mb-2">
             <ShieldCheck size={32} />
           </div>
           <h1 className="text-3xl font-black text-primary uppercase tracking-tighter">Security Center</h1>

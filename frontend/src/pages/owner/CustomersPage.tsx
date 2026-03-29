@@ -51,7 +51,7 @@ export default function CustomersPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filtered.map((c: any) => (
-          <div key={c.id} className="card-cozy p-10 border-stone-50 hover:border-accent/30 transition-all group bg-white shadow-xl shadow-black/[0.02] hover:-translate-y-2 duration-500 relative overflow-hidden">
+          <div key={c.id} className="card-cozy p-10 border-stone-50 hover:border-accent/30 transition-all group bg-white shadow-xl shadow-black/2 hover:-translate-y-2 duration-500 relative overflow-hidden">
             
             <div className="flex items-start justify-between mb-8">
                <div className="w-16 h-16 bg-secondary rounded-3xl flex items-center justify-center text-primary border border-stone-100 shadow-inner group-hover:rotate-6 transition-transform duration-500 font-black text-2xl uppercase tracking-tighter">

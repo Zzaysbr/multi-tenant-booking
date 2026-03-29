@@ -38,11 +38,11 @@ export default function HomePage() {
       </section>
 
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-        {loading ? [1,2,3].map(i => <div key={i} className="h-[500px] rounded-[48px] skeleton"/>) : filtered.map((shop: any) => (
-          <div key={shop.id} onClick={() => navigate(`/${shop.path_name}`)} className="group relative aspect-[4/5] rounded-[48px] overflow-hidden cursor-pointer shadow-premium border-none">
+        {loading ? [1,2,3].map(i => <div key={i} className="h-125 rounded-[48px] skeleton"/>) : filtered.map((shop: any) => (
+          <div key={shop.id} onClick={() => navigate(`/${shop.path_name}`)} className="group relative aspect-4/5 rounded-[48px] overflow-hidden cursor-pointer shadow-premium border-none">
             {/* ✅ ใช้ getFullImageUrl */}
             <img src={getFullImageUrl(shop.logo_url) || "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=1000"} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110" alt={shop.name} />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/95 via-primary/20 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-primary/95 via-primary/20 to-transparent" />
             <div className="absolute bottom-10 left-10 right-10 space-y-4">
               <div className="badge-cafe bg-accent text-white border-none shadow-lg">Verified Partner</div>
               <h3 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">{shop.name}</h3>

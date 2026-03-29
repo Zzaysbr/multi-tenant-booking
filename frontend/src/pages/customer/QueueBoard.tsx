@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../api/axios';
 import { 
-  Users, Clock, PlayCircle, CheckCircle2, 
+  Users, PlayCircle, CheckCircle2, 
   Loader2, Sparkles, Coffee, ArrowRightCircle
 } from 'lucide-react';
 
@@ -56,7 +56,7 @@ export default function QueueBoard() {
             </div>
             <h1 className="text-5xl font-black tracking-tighter uppercase leading-none">{tenantPath} Queue Board</h1>
           </div>
-          <div className="bg-white/10 backdrop-blur-md px-8 py-4 rounded-[24px] border border-white/10 text-center">
+          <div className="bg-white/10 backdrop-blur-md px-8 py-4 rounded-3xl border border-white/10 text-center">
              <p className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1 text-accent">Current Time</p>
              <p className="text-2xl font-black">{new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</p>
           </div>

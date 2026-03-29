@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import CustomerNavbar from '../../components/layouts/CustomerNavbar';
 import { toast } from 'sonner';
-import { QrCode, Upload, ArrowLeft, Loader2, Camera, Calendar, Clock, Info, CreditCard } from 'lucide-react';
+import { QrCode, Upload, ArrowLeft, Loader2, Camera, Calendar, Clock, CreditCard } from 'lucide-react';
 import { getFullImageUrl } from '../../utils/image';
 
 export default function PaymentPage() {
@@ -118,7 +118,7 @@ export default function PaymentPage() {
             <section className="card-cozy p-12! text-center space-y-10 border-stone-100 bg-white">
                <div className="space-y-2"><div className="flex items-center justify-center gap-2 text-accent"><QrCode size={20}/><h3 className="text-[11px] font-black uppercase tracking-[0.4em]">PromptPay QR</h3></div><p className="text-xs font-bold text-muted uppercase">สแกนชำระเงินผ่านแอปพลิเคชันธนาคาร</p></div>
                <div className="bg-secondary p-8 rounded-[48px] inline-block border-4 border-white shadow-inner">
-                 {shop?.qrCodeUrl ? <img src={getFullImageUrl(shop.qrCodeUrl)!} className="w-64 h-64 object-cover rounded-[36px] shadow-sm" /> : <div className="w-64 h-64 flex items-center justify-center text-stone-200 font-black text-xs uppercase tracking-widest">No QR Code</div>}
+                 {shop?.qrCodeUrl ? <img src={getFullImageUrl(shop.qrCodeUrl)!} className="w-64 h-64 object-cover rounded-card shadow-sm" /> : <div className="w-64 h-64 flex items-center justify-center text-stone-200 font-black text-xs uppercase tracking-widest">No QR Code</div>}
                </div>
             </section>
             <form onSubmit={handlePromptPaySubmit} className="space-y-8 pt-4">

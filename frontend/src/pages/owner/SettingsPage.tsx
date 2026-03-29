@@ -4,9 +4,9 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import { toast } from 'sonner';
 import { 
-  Store, Phone, QrCode, Save, Loader2, 
-  Camera, BellRing, HelpCircle, Clock, 
-  ImageIcon, Settings, MessageSquare, ShieldCheck, X 
+  Store, QrCode, Save, Loader2, 
+  Camera, HelpCircle, Clock, 
+  ImageIcon, Settings, MessageSquare, X 
 } from 'lucide-react';
 
 // ✅ กำหนด URL ของ Backend เพื่อให้ดึงรูปได้ถูกต้อง

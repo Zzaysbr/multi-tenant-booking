@@ -4,7 +4,7 @@ import CustomerNavbar from '../../components/layouts/CustomerNavbar';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import { toast } from 'sonner';
-import { User, Camera, Save, ArrowLeft, Lock, Mail, Loader2, Trash2 } from 'lucide-react';
+import { User, Camera, Save, ArrowLeft, Lock, Loader2,} from 'lucide-react';
 import { getFullImageUrl } from '../../utils/image';
 
 export default function ProfilePage() {

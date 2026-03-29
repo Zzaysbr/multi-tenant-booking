@@ -1,6 +1,5 @@
 // src/pages/owner/CreateShopPage.tsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
@@ -8,7 +7,6 @@ import { Store, Link2, Loader2, Sparkles, ArrowRight } from 'lucide-react';
 
 export default function CreateShopPage() {
   const { user, setUser } = useAuth();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ name: '', path_name: '' });
 

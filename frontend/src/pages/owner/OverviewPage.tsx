@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, Legend 
+  Tooltip, ResponsiveContainer, 
+  PieChart, Pie, Cell
 } from 'recharts';
 import { 
-  TrendingUp, ShoppingBag, DollarSign, 
+  ShoppingBag, DollarSign, 
   ArrowUpRight, Loader2, Calendar, Sparkles, UserCheck
 } from 'lucide-react';
 
@@ -22,7 +22,7 @@ export default function OverviewPage() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      if (!user?.tenantPath) return; // ✅ กันเหนียว
+      if (!user?.tenantPath) return;
       try {
         const [reportRes, statsRes] = await Promise.all([
           api.get(`/api/${user.tenantPath}/owner/reports`),

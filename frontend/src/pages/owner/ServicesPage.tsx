@@ -5,7 +5,7 @@ import api from '../../api/axios';
 import { toast } from 'sonner';
 import { 
   Scissors, Clock, Coins, PlusCircle, 
-  Trash2, Loader2, Sparkles, Timer, LayoutGrid
+  Trash2, Loader2, Sparkles, Timer
 } from 'lucide-react';
 
 export default function ServicesPage() {

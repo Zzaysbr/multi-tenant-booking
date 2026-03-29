@@ -27,11 +27,22 @@ export const tenantAuthMiddleware = (app: Elysia) => app
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
         const payload = await jwt.verify(token);
-        if (payload) currentUser = payload;
+
+        if (payload && typeof payload.id === 'number') {
+          currentUser = {
+            id: payload.id,
+            email: payload.email,
+            role: payload.role,
+            tenantId: payload.tenantId
+          };
+        }
       }
 
-      return { currentTenant: tenant || null, currentUser: currentUser || null };
+      return { 
+        currentTenant: tenant || null, 
+        currentUser: currentUser || null };
     } catch (err) {
+      console.error("Auth middle ware Error:", err);
       return { currentTenant: null, currentUser: null };
     }
   });

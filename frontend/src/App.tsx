@@ -25,17 +25,24 @@ import QueueBoard from './pages/customer/QueueBoard';
 // Layouts
 import MainLayout from './components/layouts/MainLayout';
 import CustomerLayout from './components/layouts/CustomerLayout';
+import ProfilePage from './pages/customer/ProfilePage';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
+import AuthSuccessPage from './pages/auth/AuthSuccessPage';
 
 function App() {
   return (
     <AuthProvider>
       <Toaster position="top-center" richColors />
       <Routes>
-        {/* --- Authentication --- */}
-        <Route path="/login" element={<AuthPage />} />
-        
-        {/* --- หน้ารวม --- */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<AuthPage />} />
+
+        <Route path="profile" element={<ProfilePage />}/>
+        <Route path="my-bookings" element={<MyBookingsPage />}/>
+        <Route path='/forgot-password' element={<ForgotPassword />}/>
+        <Route path='/reset-password' element={<ResetPassword />}/>
+        <Route path='/auth-success' element={<AuthSuccessPage/>}/>
         
         {/* --- Protected Owner Routes --- */}
         <Route element={<ProtectedRoute />}>
@@ -54,12 +61,10 @@ function App() {
         {/* --- Customer Journey --- */}
         <Route path="/:tenantPath" element={<CustomerLayout />}>
           <Route index element={<ShopPage />} />
-          
-          {/* หน้าอื่นๆ ของร้านนั้นๆ */}
           <Route path="book" element={<BookingPage />} />
-          <Route path="my-bookings" element={<MyBookingsPage />}/>
           <Route path="pay/:bookingId" element={<PaymentPage />}/> 
           <Route path="queue" element={<QueueBoard />}/>
+          
         </Route>
         
         {/* --- 404 Redirect --- */}

@@ -12,10 +12,10 @@ export default function QueueBoard() {
   const [loading, setLoading] = useState(true);
   const [queues, setQueues] = useState<any>({ serving: [], waiting: [] });
 
-  //  ดึงข้อมูลคิว (แนะนำให้ตั้ง Interval เพื่อให้มัน Auto-refresh เหมือนจอทีวี)
+  // ✅ ดึงข้อมูลคิว (แนะนำให้ตั้ง Interval เพื่อให้มัน Auto-refresh เหมือนจอทีวี)
   const fetchQueue = async () => {
     try {
-      // หมายเหตุ: พี่ต้องมีขา /api/${tenantPath}/queue ใน Backend นะครับ
+      // ✅ เติม /api กลับเข้าไปให้ถูกตาม baseURL
       const res = await api.get(`/api/${tenantPath}/bookings/queue`);
       setQueues({
         serving: res.data.serving || [], // คิวที่สถานะ 'confirmed' (กำลังให้บริการ)
@@ -30,7 +30,8 @@ export default function QueueBoard() {
 
   useEffect(() => {
     fetchQueue();
-    const interval = setInterval(fetchQueue, 30000); // รีเฟรชทุก 30 วินาที
+    // ✅ ตั้งเวลา Auto-refresh ทุกๆ 30 วินาที
+    const interval = setInterval(fetchQueue, 30000); 
     return () => clearInterval(interval);
   }, [tenantPath]);
 
@@ -64,49 +65,50 @@ export default function QueueBoard() {
 
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 -mt-10">
         
-        {/* ---  NOW SERVING (คิวที่กำลังให้บริการ) --- */}
+        {/* --- 🟢 NOW SERVING (คิวที่กำลังให้บริการ) --- */}
         <div className="lg:col-span-7 space-y-6">
           <div className="card-cozy p-10! bg-white border-emerald-100 border-2 shadow-2xl shadow-emerald-900/5 h-full">
             <div className="flex items-center gap-3 mb-10">
               <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center animate-pulse"><PlayCircle size={20}/></div>
-              <h2 className="text-2xl font-black text-primary tracking-tighter uppercase">Now Serving</h2>
+              <h2 className="text-2xl font-black text-primary tracking-tighter uppercase leading-none">Now Serving</h2>
             </div>
 
             <div className="space-y-6">
               {queues.serving.length > 0 ? queues.serving.map((q: any) => (
                 <div key={q.id} className="flex items-center justify-between p-8 bg-emerald-50/50 rounded-card border border-emerald-100 group">
                    <div className="space-y-1">
-                      <p className="text-5xl font-black text-emerald-700 tracking-tighter mb-2">#{q.id}</p>
-                      <p className="text-sm font-black text-primary uppercase">{q.customerName}</p>
+                      {/* ✅ ID คิวตัวใหญ่ชัดเจน */}
+                      <p className="text-5xl font-black text-emerald-700 tracking-tighter mb-2 leading-none">#{q.id}</p>
+                      <p className="text-sm font-black text-primary uppercase leading-none">{q.customerName}</p>
                    </div>
                    <div className="text-right">
                       <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Provider</p>
-                      <p className="text-xl font-black text-primary uppercase">{q.staffName}</p>
+                      <p className="text-xl font-black text-primary uppercase leading-none">{q.staffName}</p>
                    </div>
                 </div>
               )) : (
                 <div className="py-20 text-center text-stone-300 space-y-4">
                   <Coffee size={48} className="mx-auto opacity-20" />
-                  <p className="font-black text-xs uppercase tracking-widest">No active sessions at the moment</p>
+                  <p className="font-black text-xs uppercase tracking-widest leading-none">No active sessions at the moment</p>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* ---  UP NEXT (คิวที่กำลังรอ) --- */}
+        {/* --- 🟡 UP NEXT (คิวที่กำลังรอ) --- */}
         <div className="lg:col-span-5 space-y-6">
           <div className="card-cozy p-10! border-stone-100 h-full">
             <div className="flex items-center gap-3 mb-10">
               <div className="w-10 h-10 bg-accent text-white rounded-xl flex items-center justify-center"><ArrowRightCircle size={20}/></div>
-              <h2 className="text-2xl font-black text-primary tracking-tighter uppercase">Up Next</h2>
+              <h2 className="text-2xl font-black text-primary tracking-tighter uppercase leading-none">Up Next</h2>
             </div>
 
             <div className="space-y-4">
               {queues.waiting.length > 0 ? queues.waiting.map((q: any) => (
                 <div key={q.id} className="flex items-center justify-between p-6 bg-stone-50 rounded-[28px] border border-stone-100 group hover:bg-white hover:shadow-xl transition-all duration-500">
                    <div className="flex items-center gap-6">
-                      <p className="text-2xl font-black text-primary">#{q.id}</p>
+                      <p className="text-2xl font-black text-primary leading-none">#{q.id}</p>
                       <div className="w-px h-8 bg-stone-200" />
                       <div>
                         <p className="text-sm font-black text-primary uppercase leading-none">{q.customerName}</p>
@@ -114,7 +116,7 @@ export default function QueueBoard() {
                       </div>
                    </div>
                    <div className="text-right">
-                      <p className="text-xs font-black text-primary">{new Date(q.startTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</p>
+                      <p className="text-xs font-black text-primary leading-none">{new Date(q.startTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</p>
                    </div>
                 </div>
               )) : (
@@ -130,15 +132,15 @@ export default function QueueBoard() {
                   <Users className="text-accent" size={20} />
                   <span className="text-xs font-black text-primary uppercase tracking-widest">Total Waiting</span>
                </div>
-               <span className="text-3xl font-black text-primary tracking-tighter">{queues.waiting.length}</span>
+               <span className="text-3xl font-black text-primary tracking-tighter leading-none">{queues.waiting.length}</span>
             </div>
           </div>
         </div>
 
       </div>
 
-      {/* --- Bottom Footer Tip --- */}
-      <footer className="max-w-7xl mx-auto px-6 mt-12 text-center">
+      {/* Bottom Tip */}
+      <footer className="max-w-7xl mx-auto px-6 mt-12 text-center pb-10">
          <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-full border border-stone-100 shadow-sm text-muted">
             <CheckCircle2 size={16} className="text-emerald-500" />
             <p className="text-[10px] font-black uppercase tracking-widest">Please be ready 5 minutes before your slot</p>

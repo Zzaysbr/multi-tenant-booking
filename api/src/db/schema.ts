@@ -26,6 +26,10 @@ export const users = pgTable("users", {
   role: roleEnum("role").default("CUSTOMER").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   lineUserId: varchar("line_user_id", { length: 255 }),
+  phone: varchar("phone", { length: 20 }),
+  avatar_url: text("avatar_url"),
+  resetPasswordToken: varchar("reset_password_token", { length: 255 }),
+  resetPasswordExpires: timestamp("reset_password_expires"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

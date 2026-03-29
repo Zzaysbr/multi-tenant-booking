@@ -1,32 +1,37 @@
+// src/pages/auth/AuthPage.tsx
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom'; // 👈 เพิ่ม useLocation
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
-import { Store, User, LogIn, UserPlus, Loader2 } from 'lucide-react';
+import { 
+  User, Loader2, Mail, Lock, LayoutGrid,
+  Eye, EyeOff, Zap, LogIn, UserPlus
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AuthPage() {
   const navigate = useNavigate();
-  const location = useLocation(); // 👈 ดึง state ที่ส่งมาจากหน้าอื่น
+  const location = useLocation();
   const { login } = useAuth();
-  
-  // ดักฟังว่าเราถูกเตะมาจากหน้าไหน (เช่น มาจาก /larn-1)
   const from = location.state?.from || null;
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [role, setRole] = useState<'CUSTOMER' | 'OWNER'>('CUSTOMER');
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '', email: '', password: '', shopName: '', tenantPath: ''
-  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', shopName: '', tenantPath: '' });
+
+  const handleGoogleLogin = () => {
+    const callbackPath = from ? encodeURIComponent(from) : '';
+    // ✅ ตรวจสอบ VITE_API_BASE_URL ใน .env ว่ามี /api ปิดท้ายไหม
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google?redirect=${callbackPath}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const endpoint = mode === 'login' ? '/auth/login' : (role === 'OWNER' ? '/auth/create-shop' : '/auth/register');
-      
       const payload = mode === 'login' 
         ? { email: formData.email, password: formData.password }
         : (role === 'OWNER' 
@@ -35,107 +40,175 @@ export default function AuthPage() {
           );
 
       const res = await api.post(endpoint, payload);
-      
-      // 1. เก็บข้อมูลลง Context และ LocalStorage
       login(res.data.token, res.data.user);
-      toast.success(mode === 'login' ? "เข้าสู่ระบบสำเร็จ!" : "ลงทะเบียนสำเร็จ!");
-
-      // 2. 🚀 [หัวใจหลัก] Logic การส่งตัวผู้ใช้ไปหน้าต่างๆ
-      
-      // กฎข้อที่ 1: ถ้ามีหน้าเดิมที่ค้างไว้ (เช่น ลูกค้าจองคิวค้างไว้) ให้กลับไปหน้านั้นก่อน
-      if (from) {
-        navigate(from, { replace: true });
-        return;
-      }
-
-      // กฎข้อที่ 2: ถ้าไม่มีหน้าค้างไว้ ให้แยกตาม Role
-      if (res.data.user.role === 'OWNER') {
-        // เจ้าของร้านไปหลังบ้าน
-        navigate('/owner/dashboard', { replace: true });
-      } else {
-        // ลูกค้าทั่วไปไปหน้าแรกเพื่อเลือกร้าน
-        navigate('/', { replace: true });
-      }
-
+      toast.success("ยินดีต้อนรับเข้าสู่ระบบ");
+      navigate(from || (res.data.user.role === 'OWNER' ? '/owner/dashboard' : '/'), { replace: true });
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "เกิดข้อผิดพลาด กรุณาลองใหม่");
-    } finally {
-      setLoading(false);
-    }
+      toast.error(err.response?.data?.error || "ข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-6 font-sans">
-      <div className="w-full max-w-md space-y-6">
-        
-        {/* --- สวิตช์สลับ Login / Register --- */}
-        <div className="flex bg-secondary/30 p-1 rounded-full relative">
-          <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-full shadow-sm transition-all duration-300 ${mode === 'register' ? 'left-[calc(50%+2px)]' : 'left-1'}`} />
-          <button onClick={() => setMode('login')} className={`flex-1 py-3 text-sm font-bold z-10 transition-colors ${mode === 'login' ? 'text-primary' : 'text-accent'}`}>เข้าสู่ระบบ</button>
-          <button onClick={() => setMode('register')} className={`flex-1 py-3 text-sm font-bold z-10 transition-colors ${mode === 'register' ? 'text-primary' : 'text-accent'}`}>สมัครสมาชิก</button>
+    <div className="min-h-screen bg-bg flex font-sans No Italic selection:bg-accent/20">
+      
+      {/* --- Left Column: Guide (Hidden on Mobile) --- */}
+      <section className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden flex-col justify-between p-20">
+        <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
+          <div className="absolute top-[-10%] right-[-10%] w-125 h-125 bg-accent rounded-full blur-[120px]" />
         </div>
+        <div className="relative z-10 space-y-12">
+          <Link to="/" className="flex items-center gap-4 group cursor-pointer">
+            <div className="w-12 h-12 bg-accent rounded-[18px] flex items-center justify-center text-primary shadow-2xl transition-transform group-hover:rotate-12">
+              <LayoutGrid size={24} />
+            </div>
+            <span className="text-2xl font-black text-white uppercase tracking-tighter">Cozy Bookings</span>
+          </Link>
+          <div className="space-y-6 max-w-lg">
+            <h2 className="text-6xl font-black text-white uppercase tracking-tighter leading-[0.9]">
+              Elevate<br /><span className="text-accent">Service</span><br />Scheduling
+            </h2>
+            <p className="text-white/80 text-lg font-medium leading-relaxed uppercase tracking-tight">
+              ศูนย์รวมการจัดการคิวระดับพรีเมียม เพื่อประสบการณ์ที่ราบรื่นที่สุดของธุรกิจคุณ
+            </p>
+          </div>
+          <div className="grid gap-8 pt-10">
+            <div className="flex items-start gap-5">
+               <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-accent shrink-0"><Zap size={20}/></div>
+               <div className="space-y-1">
+                  <h4 className="text-sm font-black text-white uppercase tracking-wider">Instant Sync</h4>
+                  <p className="text-xs font-bold text-white/50 uppercase tracking-tight">อัปเดตสถานะคิวเรียลไทม์ แม่นยำทุกเสี้ยววินาที</p>
+               </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <div className="bg-white p-8 rounded-card shadow-sm border border-accent/10 animate-in fade-in zoom-in duration-300">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            
-            {/* --- เลือกประเภทบัญชี (โชว์เฉพาะตอน Register) --- */}
+      {/* --- Right Column: Form --- */}
+      <section className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-20 relative">
+        <div className="max-w-110 w-full space-y-10 animate-in fade-in slide-in-from-right-8 duration-1000">
+          
+          <header className="space-y-2 text-center lg:text-left">
+            <h1 className="text-4xl font-black text-primary uppercase tracking-tighter">
+              {mode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
+            </h1>
+            <p className="text-sm font-bold text-primary/40 uppercase tracking-widest">
+              {mode === 'login' ? 'กรุณาระบุข้อมูลเพื่อเข้าใช้งาน' : 'เข้าร่วมเครือข่ายพาร์ทเนอร์ของเราวันนี้'}
+            </p>
+          </header>
+
+          {/* Social Login */}
+          <button 
+            onClick={handleGoogleLogin} 
+            className="w-full flex items-center justify-center gap-4 py-5 px-6 border border-stone-200 rounded-2xl hover:bg-white hover:border-accent/30 transition-all font-black text-[11px] uppercase tracking-[0.2em] shadow-sm cursor-pointer"
+          >
+             <div className="w-5 h-5 flex items-center justify-center bg-white rounded-md border border-stone-50">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-3" alt="G" />
+             </div>
+             Continue with Google
+          </button>
+
+          <div className="flex items-center gap-4 text-[9px] font-black text-stone-200 uppercase tracking-[0.3em]">
+             <div className="h-px flex-1 bg-stone-100" /> 
+             หรือระบุข้อมูลบัญชี 
+             <div className="h-px flex-1 bg-stone-100" />
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             {mode === 'register' && (
-              <div className="grid grid-cols-2 gap-3 mb-6 animate-in slide-in-from-top-2">
-                <button type="button" onClick={() => setRole('CUSTOMER')} className={`p-4 border rounded-xl flex flex-col items-center gap-2 transition-all ${role === 'CUSTOMER' ? 'border-primary bg-primary/5 text-primary' : 'border-accent/20 text-accent hover:border-primary/50'}`}>
-                  <User size={24} />
-                  <span className="text-sm font-bold">ลูกค้าทั่วไป</span>
-                </button>
-                <button type="button" onClick={() => setRole('OWNER')} className={`p-4 border rounded-xl flex flex-col items-center gap-2 transition-all ${role === 'OWNER' ? 'border-primary bg-primary/5 text-primary' : 'border-accent/20 text-accent hover:border-primary/50'}`}>
-                  <Store size={24} />
-                  <span className="text-sm font-bold">เปิดร้านค้าใหม่</span>
-                </button>
+              <div className="p-1.5 bg-stone-100/50 rounded-[22px] flex border border-stone-100 mb-6">
+                 <button type="button" onClick={() => setRole('CUSTOMER')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-[16px] transition-all cursor-pointer ${role === 'CUSTOMER' ? 'bg-white text-primary shadow-sm' : 'text-muted'}`}>ลูกค้าทั่วไป</button>
+                 <button type="button" onClick={() => setRole('OWNER')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-[16px] transition-all cursor-pointer ${role === 'OWNER' ? 'bg-white text-primary shadow-sm' : 'text-muted'}`}>เจ้าของธุรกิจ</button>
               </div>
             )}
 
-            {mode === 'register' && (
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-secondary-foreground">ชื่อ - นามสกุล</label>
-                <input required type="text" className="input-warm w-full" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="สมชาย ใจดี" />
-              </div>
-            )}
-
-            {/* --- ฟอร์มพิเศษสำหรับเจ้าของร้าน --- */}
-            {mode === 'register' && role === 'OWNER' && (
-              <div className="space-y-4 p-4 bg-orange-50/50 rounded-xl border border-orange-100 animate-in zoom-in">
+            <div className="space-y-5">
+              {mode === 'register' && (
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-secondary-foreground">ชื่อร้านค้า</label>
-                  <input required type="text" className="input-warm w-full" value={formData.shopName} onChange={e => setFormData({...formData, shopName: e.target.value})} placeholder="เช่น ลอเฟี้ยว บาร์เบอร์" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-secondary-foreground">URL ลิงก์ร้านค้า</label>
-                  <div className="flex items-center">
-                    <span className="bg-secondary/50 px-3 py-3 border border-r-0 border-accent/20 rounded-l-xl text-accent text-sm">/</span>
-                    <input required type="text" className="input-warm w-full rounded-l-none" value={formData.tenantPath} onChange={e => setFormData({...formData, tenantPath: e.target.value.replace(/[^a-zA-Z0-9-]/g, '')})} placeholder="larn-1" />
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary/60 px-2">ชื่อที่แสดงในระบบ</label>
+                  <div className="relative">
+                    <User className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
+                    <input required type="text" className="input-warm pl-16" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="สมชาย ใจดี" />
                   </div>
                 </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-primary/60 px-2">อีเมลบัญชี</label>
+                <div className="relative">
+                  <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
+                  <input required type="email" className="input-warm pl-16" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="email@example.com" />
+                </div>
               </div>
-            )}
 
-            {/* --- ข้อมูลพื้นฐาน --- */}
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-secondary-foreground">อีเมล</label>
-              <input required type="email" className="input-warm w-full" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="email@example.com" />
+              <div className="space-y-2">
+                <div className="flex justify-between items-center px-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary/60">รหัสผ่าน</label>
+                  {mode === 'login' && (
+                    <Link to="/forgot-password" className="text-[10px] font-black text-accent uppercase tracking-widest hover:text-primary transition-colors cursor-pointer">
+                       ลืมรหัสผ่าน?
+                    </Link>
+                  )}
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-300" size={18} />
+                  <input required type={showPassword ? "text" : "password"} className="input-warm pl-16 pr-14" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-6 top-1/2 -translate-y-1/2 text-stone-300 hover:text-accent cursor-pointer transition-colors">
+                    {showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                  </button>
+                </div>
+              </div>
+
+              {mode === 'register' && role === 'OWNER' && (
+                <div className="space-y-5 p-6 bg-stone-50 rounded-4xl border border-stone-100 animate-in zoom-in">
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-accent">ชื่อธุรกิจของคุณ</label>
+                      <input required type="text" className="input-warm" value={formData.shopName} onChange={e => setFormData({...formData, shopName: e.target.value})} placeholder="เช่น Skyline Studio" />
+                   </div>
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-accent">URL ของร้านค้า</label>
+                      <div className="flex items-center">
+                        <span className="bg-white px-4 py-4 border border-r-0 border-stone-200 rounded-l-[16px] text-stone-300 text-xs font-black">/</span>
+                        <input required type="text" className="input-warm rounded-l-none" value={formData.tenantPath} onChange={e => setFormData({...formData, tenantPath: e.target.value.replace(/[^a-zA-Z0-9-]/g, '')})} placeholder="skyline" />
+                      </div>
+                   </div>
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-secondary-foreground">รหัสผ่าน</label>
-              <input required type="password" className="input-warm w-full" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="••••••••" />
-            </div>
-
-            <button disabled={loading} type="submit" className="btn-primary w-full py-4 mt-6 text-lg shadow-xl shadow-primary/20">
-              {loading ? <Loader2 className="animate-spin mx-auto" /> : (
-                <div className="flex justify-center items-center gap-2">
-                  {mode === 'login' ? <><LogIn size={20}/> เข้าสู่ระบบ</> : <><UserPlus size={20}/> ดำเนินการต่อ</>}
+            <button disabled={loading} type="submit" className="btn-boutique-primary w-full py-6 text-sm shadow-premium cursor-pointer">
+              {loading ? <Loader2 className="animate-spin" /> : (
+                <div className="flex items-center justify-center gap-3">
+                  {mode === 'login' ? <LogIn size={18}/> : <UserPlus size={18}/>}
+                  <span>{mode === 'login' ? 'เข้าสู่ระบบตอนนี้' : 'สร้างบัญชีผู้ใช้'}</span>
                 </div>
               )}
             </button>
           </form>
+
+          <footer className="text-center pt-6">
+             <p className="text-[11px] font-bold text-muted uppercase tracking-[0.2em]">
+                {mode === 'login' ? 'ยังไม่มีบัญชีผู้ใช้?' : 'เป็นสมาชิกอยู่แล้ว?'} {' '}
+                <button 
+                  onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                  className="text-primary font-black hover:text-accent transition-colors underline decoration-accent/30 underline-offset-4 cursor-pointer"
+                >
+                   {mode === 'login' ? 'สมัครสมาชิกที่นี่' : 'เข้าสู่ระบบ'}
+                </button>
+             </p>
+          </footer>
         </div>
+      </section>
+    </div>
+  );
+}
+
+function GuideItem({ icon, title, desc }: any) {
+  return (
+    <div className="flex items-start gap-5">
+      <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-accent shrink-0">{icon}</div>
+      <div className="space-y-1">
+        <h4 className="text-sm font-black text-white uppercase tracking-wider">{title}</h4>
+        <p className="text-xs font-bold text-white/60 leading-relaxed uppercase tracking-tight">{desc}</p>
       </div>
     </div>
   );

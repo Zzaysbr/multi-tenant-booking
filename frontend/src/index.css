@@ -3,40 +3,44 @@
 
 @theme {
   --font-sans: "Inter", "Kanit", sans-serif;
-  --color-primary: #4A3728;
-  --color-accent: #B38B6D;
-  --color-secondary: #F5EFEA;
-  --color-secondary-foreground: #2D241E;
-  --color-muted: #6F6156;
-  --color-bg: #FDFCFB;
+  --color-primary: #4A3728;            /* Espresso */
+  --color-primary-light: #634B39;
+  --color-accent: #B38B6D;             /* Caramel */
+  --color-secondary: #F5EFEA;          /* Latte */
+  --color-secondary-foreground: #2D241E; 
+  --color-muted: #8C7E74;
+  
+  /* ✅ ปรับพื้นหลังให้เป็นสีครีมนวล ลดอาการแสบตา */
+  --color-bg: #F7F3F0;                 /* Warm Linen */
 
-  --radius-btn: 18px;
-  /* ✅ จุดสมดุลความงาม: 36px */
+  --radius-btn: 16px;
   --radius-card: 36px; 
   
-  --shadow-cozy: 0 20px 50px rgba(74, 55, 40, 0.05);
+  --shadow-cozy: 0 4px 20px -2px rgba(74, 55, 40, 0.04);
+  --shadow-premium: 0 30px 60px -12px rgba(74, 55, 40, 0.12);
 }
 
 @layer base {
   body {
     @apply bg-bg text-secondary-foreground antialiased selection:bg-accent/20;
-    /* ✅ ยันต์กันตัวเอียง: บังคับทุกอย่างให้ตั้งตรง */
-    font-style: normal !important;
+    font-style: normal !important; /* No Italic */
   }
 }
 
 @layer components {
   .card-cozy {
-    @apply bg-white p-8 rounded-card border border-stone-100 shadow-cozy
-           transition-all duration-500 hover:shadow-[0_30px_60px_rgba(74,55,40,0.08)] 
-           hover:-translate-y-1;
+    @apply bg-white/90 backdrop-blur-md rounded-card border border-white shadow-cozy
+           transition-all duration-500 ease-out;
+  }
+  .btn-boutique-primary {
+    @apply px-8 py-4 bg-primary text-white rounded-btn font-black text-[11px] 
+           uppercase tracking-[0.2em] shadow-lg shadow-primary/20 
+           hover:bg-primary-light hover:shadow-premium hover:-translate-y-0.5 
+           active:scale-95 transition-all duration-300;
   }
   .input-warm {
-    @apply w-full px-6 py-4 bg-white border border-stone-200 rounded-btn font-medium
+    @apply w-full px-6 py-5 bg-white/50 border border-stone-200 rounded-btn font-bold text-sm
            focus:outline-none focus:ring-4 focus:ring-accent/10 focus:border-accent 
-           transition-all placeholder:text-muted/50 text-secondary-foreground;
-  }
-  .badge-cafe {
-    @apply px-3 py-1 bg-accent/10 text-accent rounded-full text-[10px] font-black uppercase tracking-widest;
+           transition-all duration-300 placeholder:text-muted/40;
   }
 }

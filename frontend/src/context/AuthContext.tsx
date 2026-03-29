@@ -1,21 +1,20 @@
-// src/context/AuthContext.tsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
-// ✅ 1. เพิ่มฟิลด์ให้ User ครบตามที่ใช้งานจริง
+
 interface User { 
   id: number; 
   name: string; 
   email: string; 
   role: string; 
   tenantPath?: string; 
-  phone?: string;       // 👈 เพิ่มเพื่อรองรับหน้า Profile
-  avatar_url?: string;  // 👈 เพิ่มเพื่อรองรับรูปโปรไฟล์
+  phone?: string;       
+  avatar_url?: string; 
 }
 
 interface AuthContextType { 
   user: User | null; 
-  setUser: (user: User | null) => void; // 👈 เพิ่มเพื่อให้หน้า Profile อัปเดต state ได้
+  setUser: (user: User | null) => void;
   login: (token: string, userData: User) => void; 
   logout: () => void; 
   loading: boolean; 
@@ -59,11 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     clearAuth();
-    // ✅ ใช้ window.location เพื่อล้าง state ของแอปให้สะอาดที่สุดตอนออก
     window.location.href = '/login';
   };
 
-  // ✅ ทุกครั้งที่มีการ setUser (เช่น อัปเดตโปรไฟล์) ให้บันทึกลง localStorage ด้วย
   const updateUserInfo = (newUser: User | null) => {
     setUser(newUser);
     if (newUser) {

@@ -1,9 +1,9 @@
-// src/pages/customer/ShopPage.tsx
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import CustomerNavbar from '../../components/layouts/CustomerNavbar';
-import { MapPin, Phone, Clock, ArrowRight, Sparkles, Star, Package, Loader2 } from 'lucide-react';
+import { MapPin, Phone, Clock, ArrowRight, Sparkles, Star, Package } from 'lucide-react';
+import { getFullImageUrl } from '../../utils/image'; // ✅ Import Helper
 
 export default function ShopPage() {
   const { tenantPath } = useParams();
@@ -29,7 +29,8 @@ export default function ShopPage() {
       <CustomerNavbar />
       <section className="pt-28 max-w-6xl mx-auto px-6 space-y-16">
         <div className="relative h-[60vh] rounded-card overflow-hidden shadow-premium group">
-          <img src={shop?.logo_url || "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=1000"} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[3s]" />
+          {/* ✅ ใช้ getFullImageUrl */}
+          <img src={getFullImageUrl(shop?.logo_url) || "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=1000"} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[3s]" />
           <div className="absolute inset-0 bg-gradient-to-t from-primary/95 via-primary/20 to-transparent" />
           <div className="absolute bottom-12 left-12 right-12 text-white space-y-6">
             <div className="flex items-center gap-4"><span className="badge-cafe bg-accent text-white border-none shadow-lg">Premier Experience</span><div className="flex text-yellow-400">{[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor"/>)}</div></div>

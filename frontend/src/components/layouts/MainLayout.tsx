@@ -7,6 +7,8 @@ import {
   BarChart3, Settings, LogOut, ChevronLeft,
   BellRing, CheckSquare, User, Globe
 } from 'lucide-react';
+import { getFullImageUrl } from '../../utils/image';
+
 
 export default function MainLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -99,7 +101,7 @@ export default function MainLayout() {
                     <p className="text-[8px] font-bold text-accent uppercase tracking-widest">Administrator</p>
                  </div>
                  <div className="w-11 h-11 bg-secondary rounded-2xl border border-stone-100 shadow-inner flex items-center justify-center text-primary font-black uppercase overflow-hidden">
-                    {user?.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" /> : <User size={20} />}
+                    {user?.avatar_url ? <img src={getFullImageUrl(user.avatar_url)} className="w-full h-full object-cover" /> : <User size={20} />}
                  </div>
               </div>
            </div>

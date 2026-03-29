@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import { toast } from 'sonner';
 import { Check, X, Eye, Clock, User, Landmark, Loader2 } from 'lucide-react';
+import { getFullImageUrl } from '../../utils/image';
 
 export default function ApprovalsPage() {
   const { user } = useAuth();
@@ -78,7 +79,7 @@ export default function ApprovalsPage() {
             <div className="w-full lg:w-80 bg-stone-50/50 p-8 flex flex-col justify-center items-center border-t lg:border-t-0 lg:border-l border-stone-100">
               {item.slipUrl ? (
                 <div className="relative group cursor-pointer w-32 h-44" onClick={() => setSelectedSlip(item.slipUrl)}>
-                  <img src={item.slipUrl} alt="slip" className="w-full h-full object-cover rounded-2xl shadow-lg group-hover:brightness-50 transition-all border-4 border-white" />
+                  <img src={getFullImageUrl(item.slipUrl)} alt="slip" className="w-full h-full object-cover rounded-2xl shadow-lg group-hover:brightness-50 transition-all border-4 border-white" />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Eye className="text-white" />
                   </div>
@@ -112,7 +113,7 @@ export default function ApprovalsPage() {
       {/* 🖼️ Modal Slip Viewer */}
       {selectedSlip && (
         <div className="fixed inset-0 z-100 bg-primary/90 backdrop-blur-xl flex items-center justify-center p-10 animate-in fade-in zoom-in duration-300 cursor-pointer" onClick={() => setSelectedSlip(null)}>
-          <img src={selectedSlip} className="max-h-full max-w-lg rounded-4xl shadow-2xl border-8 border-white" />
+          <img src={getFullImageUrl(selectedSlip)} className="max-h-full max-w-lg rounded-4xl shadow-2xl border-8 border-white" />
         </div>
       )}
     </div>

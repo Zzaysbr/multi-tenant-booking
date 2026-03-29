@@ -1,11 +1,8 @@
-// src/pages/owner/BookingsPage.tsx
 import { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import { toast } from 'sonner';
-import { 
-  CheckCircle2, XCircle, Eye, Loader2, 
-  Calendar, Clock, User, Scissors, Search, Image as ImageIcon
-} from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Calendar, Clock, User, Scissors, Search, Image as ImageIcon } from 'lucide-react';
+import { getFullImageUrl } from '../../utils/image'; // ✅ Import Helper
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -15,7 +12,6 @@ export default function BookingsPage() {
 
   const fetchBookings = async () => {
     try {
-      // ✅ เรียก API ฝั่ง Owner (ต้องมี /api นำหน้าตาม baseURL ของพี่)
       const res = await api.get('/api/owner/bookings');
       setBookings(res.data.bookings || []);
     } catch (err) {
@@ -32,8 +28,8 @@ export default function BookingsPage() {
     try {
       await api.patch(`/api/owner/bookings/${id}/status`, { status });
       toast.success(status === 'confirmed' ? "ยืนยันคิวเรียบร้อย!" : "ยกเลิกคิวแล้ว");
-      fetchBookings(); // รีโหลดข้อมูล
-      setSelectedSlip(null); // ปิด Modal ถ้าเปิดอยู่
+      fetchBookings();
+      setSelectedSlip(null);
     } catch (err) {
       toast.error("ไม่สามารถอัปเดตสถานะได้");
     } finally {
@@ -46,7 +42,6 @@ export default function BookingsPage() {
   return (
     <div className="space-y-10 animate-in fade-in duration-700 font-sans No Italic pb-20">
       
-      {/* --- 🏷️ Header --- */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
           <span className="text-[10px] font-black uppercase tracking-[0.4em] text-accent">Management Hub</span>
@@ -58,16 +53,11 @@ export default function BookingsPage() {
         </div>
       </header>
 
-      {/* --- 📋 Bookings Table/Grid --- */}
       <div className="grid grid-cols-1 gap-6">
         {bookings.map((b) => (
           <div key={b.id} className="card-cozy flex flex-col lg:flex-row justify-between gap-8 border-stone-100 hover:border-accent/20">
-            
-            {/* Left: Customer Info */}
             <div className="flex-1 flex gap-6">
-               <div className="w-16 h-16 bg-secondary rounded-[24px] flex items-center justify-center text-primary shrink-0">
-                  <User size={24} />
-               </div>
+               <div className="w-16 h-16 bg-secondary rounded-[24px] flex items-center justify-center text-primary shrink-0"><User size={24} /></div>
                <div className="space-y-4">
                   <div>
                     <h3 className="text-xl font-black text-primary tracking-tight uppercase leading-none mb-1">{b.guestName || "General Customer"}</h3>
@@ -81,78 +71,39 @@ export default function BookingsPage() {
                </div>
             </div>
 
-            {/* Right: Status & Actions */}
             <div className="flex flex-row lg:flex-col justify-between items-end gap-4 min-w-[200px] border-t lg:border-t-0 lg:border-l border-stone-50 pt-6 lg:pt-0 lg:pl-8">
                <StatusBadge status={b.status} />
-               
                <div className="flex gap-3">
-                 {/* 📸 ปุ่มดูสลิป (จะโชว์ก็ต่อเมื่อมี slipUrl) */}
                  {b.slipUrl ? (
-                   <button 
-                     onClick={() => setSelectedSlip(b.slipUrl)}
-                     className="p-3 bg-accent text-white rounded-2xl shadow-lg shadow-accent/20 hover:scale-105 transition-all"
-                   >
-                     <ImageIcon size={20} />
-                   </button>
+                   <button onClick={() => setSelectedSlip(b.slipUrl)} className="p-3 bg-accent text-white rounded-2xl shadow-lg shadow-accent/20 hover:scale-105 transition-all"><ImageIcon size={20} /></button>
                  ) : (
-                   <div className="p-3 bg-stone-50 text-stone-200 rounded-2xl border border-stone-100 cursor-not-allowed">
-                     <ImageIcon size={20} />
-                   </div>
+                   <div className="p-3 bg-stone-50 text-stone-200 rounded-2xl border border-stone-100 cursor-not-allowed"><ImageIcon size={20} /></div>
                  )}
-
-                 {/* ✅ ปุ่ม Confirm */}
-                 {b.status === 'pending' && (
-                   <button 
-                     disabled={processingId === b.id}
-                     onClick={() => handleUpdateStatus(b.id, 'confirmed')}
-                     className="p-3 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all disabled:opacity-50"
-                   >
-                     {processingId === b.id ? <Loader2 className="animate-spin" size={20}/> : <CheckCircle2 size={20} />}
-                   </button>
-                 )}
-
-                 {/* ❌ ปุ่ม Cancel */}
-                 {(b.status === 'pending' || b.status === 'confirmed') && (
-                   <button 
-                     disabled={processingId === b.id}
-                     onClick={() => handleUpdateStatus(b.id, 'canceled')}
-                     className="p-3 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-500/20 hover:scale-105 transition-all disabled:opacity-50"
-                   >
-                     <XCircle size={20} />
-                   </button>
-                 )}
+                 {b.status === 'pending' && <button disabled={processingId === b.id} onClick={() => handleUpdateStatus(b.id, 'confirmed')} className="p-3 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all disabled:opacity-50">{processingId === b.id ? <Loader2 className="animate-spin" size={20}/> : <CheckCircle2 size={20} />}</button>}
+                 {(b.status === 'pending' || b.status === 'confirmed') && <button disabled={processingId === b.id} onClick={() => handleUpdateStatus(b.id, 'canceled')} className="p-3 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-500/20 hover:scale-105 transition-all disabled:opacity-50"><XCircle size={20} /></button>}
                </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* --- 📸 Slip Viewer Modal (ขอบมน 36px) --- */}
+      {/* ✅ Modal แสดงรูปสลิป ใช้ getFullImageUrl */}
       {selectedSlip && (
         <div className="fixed inset-0 bg-primary/90 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
            <div className="relative max-w-lg w-full bg-white rounded-card overflow-hidden shadow-2xl">
               <header className="p-6 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                 <h3 className="font-black text-primary uppercase tracking-widest text-sm">ตรวจสอบหลักฐานการโอน</h3>
-                <button onClick={() => setSelectedSlip(null)} className="text-stone-400 hover:text-primary transition-colors"><XCircle /></button>
+                <button onClick={() => setSelectedSlip(null)} className="text-stone-400 hover:text-primary transition-colors cursor-pointer"><XCircle /></button>
               </header>
               <div className="p-8">
-                <img src={selectedSlip} alt="Payment Slip" className="w-full rounded-2xl shadow-inner border border-stone-100" />
+                <img src={getFullImageUrl(selectedSlip)!} alt="Payment Slip" className="w-full rounded-2xl shadow-inner border border-stone-100" />
               </div>
               <footer className="p-6 bg-stone-50 flex gap-4">
-                 <button 
-                  onClick={() => {
-                    const booking = bookings.find(b => b.slipUrl === selectedSlip);
-                    if(booking) handleUpdateStatus(booking.id, 'confirmed');
-                  }}
-                  className="btn-primary flex-1 py-4 bg-emerald-600 hover:bg-emerald-700"
-                 >
-                   ยืนยันว่ายอดเงินถูกต้อง
-                 </button>
+                 <button onClick={() => { const booking = bookings.find(b => b.slipUrl === selectedSlip); if(booking) handleUpdateStatus(booking.id, 'confirmed'); }} className="btn-primary flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 cursor-pointer">ยืนยันว่ายอดเงินถูกต้อง</button>
               </footer>
            </div>
         </div>
       )}
-
     </div>
   );
 }
@@ -165,9 +116,5 @@ function StatusBadge({ status }: { status: string }) {
     canceled: { label: 'ยกเลิกแล้ว', color: 'bg-rose-50 text-rose-500 border-rose-100' }
   };
   const { label, color } = config[status] || config.pending;
-  return (
-    <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${color}`}>
-      {label}
-    </div>
-  );
+  return <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${color}`}>{label}</div>;
 }

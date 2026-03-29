@@ -1,9 +1,9 @@
-// src/pages/customer/HomePage.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import CustomerNavbar from '../../components/layouts/CustomerNavbar';
-import { Search, Sparkles, MapPin, ArrowRight, Store } from 'lucide-react';
+import { Search, Sparkles, MapPin, ArrowRight } from 'lucide-react';
+import { getFullImageUrl } from '../../utils/image';
 
 export default function HomePage() {
   const [shops, setShops] = useState([]);
@@ -29,16 +29,19 @@ export default function HomePage() {
           Discover<br /><span className="text-accent">Excellence</span>
         </h1>
         <p className="text-muted text-lg font-bold max-w-xl mx-auto leading-relaxed opacity-80 uppercase tracking-tight">เลือกจองบริการจากพาร์ทเนอร์ชั้นนำทั่วประเทศ ที่เราคัดสรรมาเพื่อคุณโดยเฉพาะ</p>
-        <div className="max-w-xl mx-auto pt-6"><div className="relative">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-300" size={20} />
-          <input type="text" placeholder="Search brands or services..." className="input-warm pl-16 py-7 shadow-2xl shadow-primary/5" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-        </div></div>
+        <div className="max-w-xl mx-auto pt-6">
+          <div className="relative">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-300" size={20} />
+            <input type="text" placeholder="Search brands or services..." className="input-warm pl-16 py-7 shadow-2xl shadow-primary/5" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+          </div>
+        </div>
       </section>
 
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
         {loading ? [1,2,3].map(i => <div key={i} className="h-[500px] rounded-[48px] skeleton"/>) : filtered.map((shop: any) => (
           <div key={shop.id} onClick={() => navigate(`/${shop.path_name}`)} className="group relative aspect-[4/5] rounded-[48px] overflow-hidden cursor-pointer shadow-premium border-none">
-            <img src={shop.logo_url || "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=1000"} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110" alt={shop.name} />
+            {/* ✅ ใช้ getFullImageUrl */}
+            <img src={getFullImageUrl(shop.logo_url) || "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=1000"} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110" alt={shop.name} />
             <div className="absolute inset-0 bg-gradient-to-t from-primary/95 via-primary/20 to-transparent" />
             <div className="absolute bottom-10 left-10 right-10 space-y-4">
               <div className="badge-cafe bg-accent text-white border-none shadow-lg">Verified Partner</div>

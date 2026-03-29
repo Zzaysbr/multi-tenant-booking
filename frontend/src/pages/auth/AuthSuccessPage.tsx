@@ -1,5 +1,5 @@
 // src/pages/auth/AuthSuccessPage.tsx
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react'; // ✅ เพิ่ม useRef
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Loader2, ShieldCheck, Sparkles } from 'lucide-react';
@@ -9,35 +9,42 @@ export default function AuthSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { login } = useAuth();
+  const isProcessed = useRef(false); // ✅ สลักนิรภัยกันวนลูป
 
   useEffect(() => {
+    // 🚩 ถ้าประมวลผลไปแล้ว ให้หยุดการทำงาน (ป้องกัน Infinite Loop และ Double Call)
+    if (isProcessed.current) return;
+
     const token = searchParams.get('token');
     const userDataRaw = searchParams.get('user');
+    const redirectParam = searchParams.get('redirect');
 
     if (token && userDataRaw) {
       try {
-        const userData = JSON.parse(decodeURIComponent(userDataRaw));
+        isProcessed.current = true; // ✅ มาร์คว่าเริ่มทำงานแล้ว
         
-        // ✅ บันทึกลงระบบ AuthContext และ LocalStorage
+        const userData = JSON.parse(decodeURIComponent(userDataRaw));
         login(token, userData);
         
         toast.success(`ยินดีต้อนรับคุณ ${userData.name}`);
 
-        // ✅ ส่งไปหน้าที่ควรไป (เจ้าของร้านไป Dashboard / ลูกค้าไปหน้าหลัก)
-        const redirectPath = userData.role === 'OWNER' ? '/owner/dashboard' : '/';
+        // ✅ คำนวณหาหน้าที่จะไป
+        const targetPath = (redirectParam && redirectParam !== 'null' && redirectParam !== '') 
+          ? decodeURIComponent(redirectParam) 
+          : (userData.role === 'OWNER' ? '/owner/dashboard' : '/');
         
-        // หน่วงเวลาเล็กน้อยเพื่อให้ User เห็นความ "กริบ" ของระบบ Check Identity
         setTimeout(() => {
-          navigate(redirectPath, { replace: true });
+          navigate(targetPath, { replace: true });
         }, 1500);
 
       } catch (err) {
         console.error("Auth Success Error:", err);
         toast.error("การประมวลผลข้อมูลล้มเหลว");
-        navigate('/login');
+        navigate('/login', { replace: true });
       }
     } else {
-      navigate('/login');
+      // ถ้าไม่มีข้อมูลสำคัญ ให้ดีดกลับหน้า Login
+      navigate('/login', { replace: true });
     }
   }, [searchParams, login, navigate]);
 
@@ -45,7 +52,6 @@ export default function AuthSuccessPage() {
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center p-6 font-sans No Italic">
       <div className="max-w-sm w-full text-center space-y-8 animate-in fade-in zoom-in duration-700">
         
-        {/* --- 🛡️ Identity Verification Icon --- */}
         <div className="relative inline-block">
           <div className="w-24 h-24 bg-white rounded-4xl flex items-center justify-center text-accent shadow-premium border border-stone-50 relative z-10">
             <ShieldCheck size={48} strokeWidth={1.5} />
@@ -53,7 +59,6 @@ export default function AuthSuccessPage() {
           <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary rounded-xl flex items-center justify-center text-accent animate-bounce shadow-lg">
             <Sparkles size={16} />
           </div>
-          {/* Decorative Ring */}
           <div className="absolute inset-0 w-24 h-24 border-4 border-accent/20 rounded-4xl animate-ping opacity-20" />
         </div>
 

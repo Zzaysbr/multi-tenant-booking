@@ -23,8 +23,11 @@ export default function AuthPage() {
 
   const handleGoogleLogin = () => {
     const callbackPath = from ? encodeURIComponent(from) : '';
-    // ✅ ตรวจสอบ VITE_API_BASE_URL ใน .env ว่ามี /api ปิดท้ายไหม
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google?redirect=${callbackPath}`;
+    
+    const rawApiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+    const backendRoot = rawApiUrl.replace('/api', '');
+    
+    window.location.href = `${backendRoot}/auth/google?redirect=${callbackPath}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,6 +101,7 @@ export default function AuthPage() {
 
           {/* Social Login */}
           <button 
+            type="button"
             onClick={handleGoogleLogin} 
             className="w-full flex items-center justify-center gap-4 py-5 px-6 border border-stone-200 rounded-2xl hover:bg-white hover:border-accent/30 transition-all font-black text-[11px] uppercase tracking-[0.2em] shadow-sm cursor-pointer"
           >

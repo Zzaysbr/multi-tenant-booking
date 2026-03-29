@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+// src/context/AuthContext.tsx
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'; // ✅ เพิ่ม useCallback
 import type { ReactNode } from 'react';
-
 
 interface User { 
   id: number; 
@@ -26,7 +26,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ตรวจสอบสถานะการล็อกอินเมื่อ Refresh หน้าจอ
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem('user');
@@ -35,40 +34,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (savedUser && savedUser !== "undefined" && token && token !== "undefined") {
         setUser(JSON.parse(savedUser));
       } else {
-        clearAuth();
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
       }
     } catch { 
-      clearAuth();
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const clearAuth = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-  };
-
-  const login = (token: string, userData: User) => {
+  // ✅ ใช้ useCallback เพื่อให้ Reference ของฟังก์ชันคงที่
+  const login = useCallback((token: string, userData: User) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-  };
+  }, []);
 
-  const logout = () => {
-    clearAuth();
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
     window.location.href = '/login';
-  };
+  }, []);
 
-  const updateUserInfo = (newUser: User | null) => {
+  const updateUserInfo = useCallback((newUser: User | null) => {
     setUser(newUser);
     if (newUser) {
       localStorage.setItem('user', JSON.stringify(newUser));
     } else {
       localStorage.removeItem('user');
     }
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, setUser: updateUserInfo, login, logout, loading }}>

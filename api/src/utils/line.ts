@@ -1,6 +1,5 @@
 // api/src/utils/line.ts
 
-// ดีไซน์การ์ดแจ้งเตือนการจองใหม่ (Flex Message)
 export const createBookingFlex = (customer: string, service: string, date: string, time: string) => ({
   type: "flex",
   altText: "🆕 มีรายการจองใหม่เข้ามาค่ะ!",
@@ -14,7 +13,8 @@ export const createBookingFlex = (customer: string, service: string, date: strin
     body: {
       type: "box", layout: "vertical", spacing: "md",
       contents: [
-        { type: "text", text: "NEW BOOKING", weight: "bold", color: "#B38B6D", size: "sm", letterSpacing: "0.2em" },
+        // ✅ ลบ letterSpacing ออกแล้ว
+        { type: "text", text: "NEW BOOKING", weight: "bold", color: "#B38B6D", size: "sm" }, 
         { type: "text", text: `คุณ ${customer}`, weight: "bold", size: "xl" },
         {
           type: "box", layout: "vertical", margin: "lg", spacing: "sm",
@@ -28,9 +28,9 @@ export const createBookingFlex = (customer: string, service: string, date: strin
   }
 });
 
+// ฟังก์ชันส่ง (เหมือนเดิม)
 export const sendLinePush = async (token: string | null, toUserId: string | null, flexMessage: any) => {
   if (!token || !toUserId) return;
-
   try {
     const response = await fetch("https://api.line.me/v2/bot/message/push", {
       method: "POST",
@@ -44,8 +44,6 @@ export const sendLinePush = async (token: string | null, toUserId: string | null
   } catch (error) { console.error("LINE API Error:", error); }
 };
 
-
-
 export const createPaymentFlex = (bookingId: string, customer: string, amount: number, slipUrl: string, tenantPath: string) => ({
   type: "flex",
   altText: "💰 แจ้งโอนเงินใหม่!",
@@ -54,7 +52,7 @@ export const createPaymentFlex = (bookingId: string, customer: string, amount: n
     styles: { header: { backgroundColor: "#4A3728" }, footer: { separator: true } },
     header: {
       type: "box", layout: "vertical", contents: [
-        { type: "text", text: "PAYMENT VERIFICATION", weight: "bold", color: "#B38B6D", size: "xs", letterSpacing: "0.2em" }
+        { type: "text", text: "PAYMENT VERIFICATION", weight: "bold", color: "#B38B6D", size: "xs" }
       ]
     },
     hero: {
@@ -71,7 +69,7 @@ export const createPaymentFlex = (bookingId: string, customer: string, amount: n
     },
     footer: {
       type: "box", layout: "vertical", contents: [
-        { type: "button", style: "primary", color: "#4A3728", height: "sm", action: { type: "uri", label: "Check System", uri: `${process.env.FRONTEND_URL}/owner/approvals` } }
+        { type: "button", style: "primary", color: "#4A3728", height: "sm", action: { type: "uri", label: "Check System", uri: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/owner/bookings` } }
       ]
     }
   }

@@ -21,6 +21,7 @@ export const tenants = pgTable("tenants", {
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   tenantId: integer("tenant_id").references(() => tenants.id),
+  googleId: varchar("google_id", { length: 255 }),
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   role: roleEnum("role").default("CUSTOMER").notNull(),

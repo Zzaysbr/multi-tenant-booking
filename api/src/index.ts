@@ -13,6 +13,7 @@ import { bookingModule } from "./modules/booking";
 import { paymentModule } from "./modules/payment";
 import { queueModule } from "./modules/queue";
 import { businessHoursModule } from "./modules/business_hours";
+import { adminModule } from "./modules/admin";
 
 const app = new Elysia()
   // --- 1. Global Setup ---
@@ -45,6 +46,8 @@ const app = new Elysia()
   // --- Global Auth Routes (ไม่ต้องมี tenantPath) ---
   .use(authModule)  
   .use(userRoutes)  
+
+  .use(adminModule)
 
   // --- Tenant Specific Routes ---
   .group("/api/:tenantPath", (apiGroup) => 

@@ -80,7 +80,7 @@ export default function OverviewPage() {
         <div className="lg:col-span-7 card-cozy p-10! border-stone-100 shadow-xl shadow-black/5">
           <h3 className="text-xl font-black text-primary tracking-tight uppercase mb-10">Revenue by Service</h3>
           <div className="h-87.5">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minHeight={300}>
               <PieChart>
                 <Pie data={data?.revenueByService} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={8} dataKey="totalRevenue" nameKey="name">
                   {data?.revenueByService?.map((_: any, index: number) => (

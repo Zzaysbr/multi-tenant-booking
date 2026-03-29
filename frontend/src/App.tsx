@@ -1,8 +1,9 @@
-// src/App.tsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from 'sonner';
+
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 // Owner Pages
 import OverviewPage from './pages/owner/OverviewPage';
@@ -38,14 +39,19 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<AuthPage />} />
 
-        <Route path="profile" element={<ProfilePage />}/>
-        <Route path="my-bookings" element={<MyBookingsPage />}/>
+        <Route path="/profile" element={<ProfilePage />}/>
+        <Route path="/my-bookings" element={<MyBookingsPage />}/>
         <Route path='/forgot-password' element={<ForgotPassword />}/>
         <Route path='/reset-password' element={<ResetPassword />}/>
         <Route path='/auth-success' element={<AuthSuccessPage/>}/>
         
-        {/* --- Protected Owner Routes --- */}
+        {/* --- Protected Routes (ต้องล็อกอินก่อน) --- */}
         <Route element={<ProtectedRoute />}>
+          
+          {/* Admin Dashboard Route */}
+          <Route path="/admin" element={<AdminDashboard />} />
+
+          {/* --- Protected Owner Routes --- */}
           <Route path="/owner" element={<MainLayout />}>
             <Route path="dashboard" element={<OverviewPage />} />
             <Route path="bookings" element={<BookingsPage />} />
@@ -64,7 +70,6 @@ function App() {
           <Route path="book" element={<BookingPage />} />
           <Route path="pay/:bookingId" element={<PaymentPage />}/> 
           <Route path="queue" element={<QueueBoard />}/>
-          
         </Route>
         
         {/* --- 404 Redirect --- */}

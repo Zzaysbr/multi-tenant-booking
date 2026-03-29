@@ -17,6 +17,7 @@ const ensureUploadDir = () => {
 
 export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
   
+  // 🛡️ Guard: ควบคุมสิทธิ์
   .onBeforeHandle(({ currentUser, currentTenant, set }: any) => {
     if (!currentTenant) { 
       set.status = 404; 
@@ -28,7 +29,7 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
     }
   })
 
-  // ✅ [FIXED 500] Business Hours Update
+  // ✅ Business Hours Update
   .patch("/business-hours", async ({ currentTenant, body, set }: any) => {
     try {
       const { schedules } = body;
@@ -60,7 +61,7 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
     })
   })
 
-  // ✅ [FIXED 422] QR Upload
+  // ✅ QR Upload
   .post("/config/qr-upload", async ({ currentTenant, body, set }: any) => {
     try {
       const { qrFile } = body;
@@ -83,7 +84,7 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
     body: t.Object({ qrFile: t.File({ type: 'image', maxSize: '5m' }) }) 
   })
 
-  // ✅ [FIXED 422] Shop Image Upload
+  // ✅ Shop Image Upload
   .post("/config/shop-upload", async ({ currentTenant, body, set }: any) => {
     try {
       const { shopFile } = body;
@@ -106,7 +107,7 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
     body: t.Object({ shopFile: t.File({ type: 'image' }) })
   })
 
-  // ✅ [PROD-READY] Patch Config (Strict Mapping)
+  // ✅ Patch Config
   .patch("/config", async ({ currentTenant, body, set }: any) => {
     try {
       await db.update(tenants)
@@ -135,7 +136,21 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
     })
   })
 
-  // --- Statistics & CRM (Optimized) ---
+  // --- 📊 Statistics & Reports ---
+  .get("/stats", async ({ currentTenant, set }: any) => {
+    try {
+      const [counts] = await db.select({
+        total: sql<number>`count(*)::int`,
+        pending: sql<number>`count(*) filter (where status = 'pending')::int`,
+        confirmed: sql<number>`count(*) filter (where status = 'confirmed')::int`
+      }).from(bookings).where(eq(bookings.tenantId, currentTenant.id));
+      
+      return { stats: counts };
+    } catch (e) {
+      set.status = 500; return { error: "Failed to load stats" };
+    }
+  })
+
   .get("/reports", async ({ currentTenant }: any) => {
     const revenueByService = await db.select({ 
       name: services.name, 
@@ -163,6 +178,7 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
     return { revenueByService, bookingsByStaff, totalRevenue: total?.sum || 0 };
   })
 
+  // --- 👥 Customer CRM ---
   .get("/customers", async ({ currentTenant }: any) => {
     const result = await db.select({ 
       id: users.id, 
@@ -179,7 +195,45 @@ export const ownerModule = (app: Elysia) => app.group('/owner', (group) => group
     return { customers: result };
   })
 
-  // --- CRUD Resource Management ---
+  // --- 📅 [RESTORED] Bookings Management (เจ้าของร้านดูคิวทั้งหมด) ---
+  .get("/bookings", async ({ currentTenant }: any) => {
+    const result = await db.select({
+      id: bookings.id, 
+      customerName: users.name, 
+      guestName: bookings.guestName, // กรณีจองแบบไม่ได้ล็อกอิน (เผื่ออนาคต)
+      serviceName: services.name,
+      staffName: staffs.name, 
+      status: bookings.status, 
+      startTime: bookings.startTime,
+      createdAt: bookings.createdAt,
+      slipUrl: payments.slipUrl, 
+      paymentStatus: payments.status 
+    })
+    .from(bookings)
+    .leftJoin(users, eq(bookings.customerId, users.id)) // ใช้ leftJoin เผื่อกรณีลูกค้าถูกลบไอดีทิ้งไปแล้ว
+    .innerJoin(services, eq(bookings.serviceId, services.id))
+    .innerJoin(staffs, eq(bookings.staffId, staffs.id))
+    .leftJoin(payments, eq(bookings.id, payments.bookingId))
+    .where(eq(bookings.tenantId, currentTenant.id))
+    .orderBy(desc(bookings.startTime)); // เรียงตามเวลาจอง
+    
+    return { bookings: result };
+  })
+
+  // อัปเดตสถานะคิว (ยืนยัน/ยกเลิก)
+  .patch("/bookings/:id/status", async ({ params: { id }, body, currentTenant, set }: any) => {
+    try {
+      const { status } = body as any;
+      await db.update(bookings)
+        .set({ status })
+        .where(and(eq(bookings.id, Number(id)), eq(bookings.tenantId, currentTenant.id)));
+      return { success: true };
+    } catch (e) {
+      set.status = 500; return { error: "Update failed" };
+    }
+  })
+
+  // --- ✂️ CRUD Resource Management (ช่าง & บริการ) ---
   .get("/staffs", async ({ currentTenant }: any) => ({ 
     staffs: await db.select().from(staffs).where(eq(staffs.tenantId, currentTenant.id)).orderBy(desc(staffs.id)) 
   }))

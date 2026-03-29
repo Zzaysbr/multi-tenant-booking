@@ -1,18 +1,23 @@
+// src/pages/owner/BookingsPage.tsx
 import { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import { toast } from 'sonner';
 import { CheckCircle2, XCircle, Loader2, Calendar, Clock, User, Scissors, Search, Image as ImageIcon } from 'lucide-react';
-import { getFullImageUrl } from '../../utils/image'; // ✅ Import Helper
+import { getFullImageUrl } from '../../utils/image';
+import { useAuth } from '../../context/AuthContext'; // ✅ 1. Import useAuth
 
 export default function BookingsPage() {
+  const { user } = useAuth(); // ✅ 2. ดึงข้อมูล user (ที่มี tenantPath) มาใช้
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSlip, setSelectedSlip] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<number | null>(null);
 
   const fetchBookings = async () => {
+    if (!user?.tenantPath) return; // ✅ 3. กันเหนียว ถ้าระบบยังไม่รู้ว่าร้านไหน ให้รอไปก่อน
     try {
-      const res = await api.get('/api/owner/bookings');
+      // ✅ 4. เติม tenantPath เข้าไปใน URL
+      const res = await api.get(`/api/${user.tenantPath}/owner/bookings`);
       setBookings(res.data.bookings || []);
     } catch (err) {
       toast.error("โหลดข้อมูลการจองไม่สำเร็จ");
@@ -21,12 +26,14 @@ export default function BookingsPage() {
     }
   };
 
-  useEffect(() => { fetchBookings(); }, []);
+  useEffect(() => { fetchBookings(); }, [user?.tenantPath]);
 
   const handleUpdateStatus = async (id: number, status: 'confirmed' | 'canceled') => {
+    if (!user?.tenantPath) return;
     setProcessingId(id);
     try {
-      await api.patch(`/api/owner/bookings/${id}/status`, { status });
+      // ✅ 5. เติม tenantPath เข้าไปใน URL ตอนอัปเดตสถานะด้วย
+      await api.patch(`/api/${user.tenantPath}/owner/bookings/${id}/status`, { status });
       toast.success(status === 'confirmed' ? "ยืนยันคิวเรียบร้อย!" : "ยกเลิกคิวแล้ว");
       fetchBookings();
       setSelectedSlip(null);
@@ -60,7 +67,8 @@ export default function BookingsPage() {
                <div className="w-16 h-16 bg-secondary rounded-[24px] flex items-center justify-center text-primary shrink-0"><User size={24} /></div>
                <div className="space-y-4">
                   <div>
-                    <h3 className="text-xl font-black text-primary tracking-tight uppercase leading-none mb-1">{b.guestName || "General Customer"}</h3>
+                    {/* ✅ ใช้ customerName ตามที่ Backend ส่งมา */}
+                    <h3 className="text-xl font-black text-primary tracking-tight uppercase leading-none mb-1">{b.customerName || b.guestName || "General Customer"}</h3>
                     <p className="text-[10px] font-black text-muted uppercase tracking-widest flex items-center gap-2">ID: #{b.id} • {b.serviceName}</p>
                   </div>
                   <div className="flex flex-wrap gap-4 text-xs font-black text-primary/60 uppercase tracking-tight">
@@ -75,19 +83,18 @@ export default function BookingsPage() {
                <StatusBadge status={b.status} />
                <div className="flex gap-3">
                  {b.slipUrl ? (
-                   <button onClick={() => setSelectedSlip(b.slipUrl)} className="p-3 bg-accent text-white rounded-2xl shadow-lg shadow-accent/20 hover:scale-105 transition-all"><ImageIcon size={20} /></button>
+                   <button onClick={() => setSelectedSlip(b.slipUrl)} className="p-3 bg-accent text-white rounded-2xl shadow-lg shadow-accent/20 hover:scale-105 transition-all cursor-pointer"><ImageIcon size={20} /></button>
                  ) : (
                    <div className="p-3 bg-stone-50 text-stone-200 rounded-2xl border border-stone-100 cursor-not-allowed"><ImageIcon size={20} /></div>
                  )}
-                 {b.status === 'pending' && <button disabled={processingId === b.id} onClick={() => handleUpdateStatus(b.id, 'confirmed')} className="p-3 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all disabled:opacity-50">{processingId === b.id ? <Loader2 className="animate-spin" size={20}/> : <CheckCircle2 size={20} />}</button>}
-                 {(b.status === 'pending' || b.status === 'confirmed') && <button disabled={processingId === b.id} onClick={() => handleUpdateStatus(b.id, 'canceled')} className="p-3 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-500/20 hover:scale-105 transition-all disabled:opacity-50"><XCircle size={20} /></button>}
+                 {b.status === 'pending' && <button disabled={processingId === b.id} onClick={() => handleUpdateStatus(b.id, 'confirmed')} className="p-3 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all disabled:opacity-50 cursor-pointer">{processingId === b.id ? <Loader2 className="animate-spin" size={20}/> : <CheckCircle2 size={20} />}</button>}
+                 {(b.status === 'pending' || b.status === 'confirmed') && <button disabled={processingId === b.id} onClick={() => handleUpdateStatus(b.id, 'canceled')} className="p-3 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-500/20 hover:scale-105 transition-all disabled:opacity-50 cursor-pointer"><XCircle size={20} /></button>}
                </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ✅ Modal แสดงรูปสลิป ใช้ getFullImageUrl */}
       {selectedSlip && (
         <div className="fixed inset-0 bg-primary/90 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
            <div className="relative max-w-lg w-full bg-white rounded-card overflow-hidden shadow-2xl">

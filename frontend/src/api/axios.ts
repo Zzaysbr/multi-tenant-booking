@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({ 
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
   withCredentials: true, 
   headers: {
     'Accept': 'application/json'
@@ -20,7 +20,7 @@ api.interceptors.request.use(
     }
     
     if (import.meta.env.DEV) {
-      console.log(`🚀 [API Request] ${config.method?.toUpperCase()} -> ${config.url}`);
+      console.log(`🚀 [API Request] ${config.method?.toUpperCase()} -> ${config.baseURL}${config.url}`);
     }
     return config;
   }, 

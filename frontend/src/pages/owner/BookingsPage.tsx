@@ -17,7 +17,7 @@ export default function BookingsPage() {
     if (!user?.tenantPath) return; // ✅ 3. กันเหนียว ถ้าระบบยังไม่รู้ว่าร้านไหน ให้รอไปก่อน
     try {
       // ✅ 4. เติม tenantPath เข้าไปใน URL
-      const res = await api.get(`/api/${user.tenantPath}/owner/bookings`);
+      const res = await api.get(`/${user.tenantPath}/owner/bookings`);
       setBookings(res.data.bookings || []);
     } catch (err) {
       toast.error("โหลดข้อมูลการจองไม่สำเร็จ");
@@ -33,7 +33,7 @@ export default function BookingsPage() {
     setProcessingId(id);
     try {
       // ✅ 5. เติม tenantPath เข้าไปใน URL ตอนอัปเดตสถานะด้วย
-      await api.patch(`/api/${user.tenantPath}/owner/bookings/${id}/status`, { status });
+      await api.patch(`/${user.tenantPath}/owner/bookings/${id}/status`, { status });
       toast.success(status === 'confirmed' ? "ยืนยันคิวเรียบร้อย!" : "ยกเลิกคิวแล้ว");
       fetchBookings();
       setSelectedSlip(null);

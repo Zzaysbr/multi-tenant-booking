@@ -26,7 +26,7 @@ const app = new Elysia()
     errorResponse: "คุณทำรายการบ่อยเกินไป กรุณาลองใหม่ในอีก 1 นาที"
   }))
 
-  // --- 🛡️ 2. Global Security Setup (OWASP A05) ---
+  // --- 🛡️ 2. Global Security Setup (OWASP A05) ---s
   .use(cors({
     origin: (request) => {
       const origin = request.headers.get('origin');

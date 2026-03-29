@@ -17,7 +17,7 @@ export default function StaffsPage() {
   const fetchStaffs = async () => {
     if (!user?.tenantPath) return;
     try {
-      const res = await api.get(`/api/${user.tenantPath}/owner/staffs`);
+      const res = await api.get(`/${user.tenantPath}/owner/staffs`);
       setStaffs(res.data.staffs || []);
     } catch (err) {
       toast.error("โหลดข้อมูลพนักงานไม่สำเร็จ");
@@ -32,7 +32,7 @@ export default function StaffsPage() {
     e.preventDefault();
     if (!name) return;
     try {
-      await api.post(`/api/${user?.tenantPath}/owner/staffs`, { name });
+      await api.post(`/${user?.tenantPath}/owner/staffs`, { name });
       toast.success("เพิ่มรายชื่อช่างเรียบร้อยแล้วครับ ✨");
       setName('');
       fetchStaffs();
@@ -42,7 +42,7 @@ export default function StaffsPage() {
   const handleDelete = async (id: number) => {
     if(!confirm("คุณแน่ใจนะว่าจะลบพนักงานคนนี้?")) return;
     try {
-      await api.delete(`/api/${user?.tenantPath}/owner/staffs/${id}`);
+      await api.delete(`/${user?.tenantPath}/owner/staffs/${id}`);
       toast.success("ลบข้อมูลสำเร็จ");
       fetchStaffs();
     } catch (err) { toast.error("ลบไม่สำเร็จ"); }

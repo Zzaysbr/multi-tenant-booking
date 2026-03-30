@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import CustomerNavbar from '../../components/layouts/CustomerNavbar';
 import { toast } from 'sonner';
-import { Calendar, Clock, Loader2, ShoppingBag, CheckCircle2, Timer, XCircle, CreditCard, RefreshCw } from 'lucide-react';
+import { Calendar, Clock, Loader2, XCircle, CreditCard, RefreshCw } from 'lucide-react';
 
 export default function MyBookingsPage() {
   const { tenantPath } = useParams();
@@ -20,41 +20,37 @@ export default function MyBookingsPage() {
 
   const fetchBookings = async () => {
     try {
+      // ✅ เรียก Path สั้นลง (axios พ่วง /api ให้แล้ว)
       const endpoint = tenantPath ? `/${tenantPath}/bookings/my-bookings` : `/user/my-bookings`;
       const res = await api.get(endpoint);
       setBookings(res.data.bookings || []);
-    } catch (err) { console.error("Failed to fetch bookings"); } finally { setLoading(false); }
+    } catch (err) { console.error(err); } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchBookings(); }, [tenantPath]);
 
   const handleCancel = async (id: number, bTenantPath?: string) => {
-    if (!window.confirm("ยืนยันการยกเลิกการนัดหมายนี้?")) return;
+    if (!window.confirm("ยกเลิกการจอง?")) return;
     try {
       const targetTenant = tenantPath || bTenantPath;
       await api.patch(`/${targetTenant}/bookings/${id}/cancel`);
-      toast.success("ยกเลิกการจองเรียบร้อย"); 
-      fetchBookings();
-    } catch (e: any) { toast.error("ยกเลิกไม่สำเร็จ"); }
+      toast.success("ยกเลิกเรียบร้อย"); fetchBookings();
+    } catch { toast.error("ยกเลิกไม่สำเร็จ"); }
   };
 
   const openReschedule = async (booking: any) => {
-    setRescheduleData(booking);
-    setSelDate(new Date().toISOString().split('T')[0]);
-    setSelTime('');
+    setRescheduleData(booking); setSelDate(new Date().toISOString().split('T')[0]); setSelTime('');
     try {
       const targetTenant = tenantPath || booking.tenantPath;
       const res = await api.get(`/${targetTenant}/bookings/init`);
       setBusinessHours(res.data.businessHours || []);
-    } catch (err) { toast.error("โหลดข้อมูลตารางเวลาไม่สำเร็จ"); }
+    } catch { toast.error("โหลดข้อมูลล้มเหลว"); }
   };
 
   useEffect(() => {
     if (rescheduleData && selDate) {
       const targetTenant = tenantPath || rescheduleData.tenantPath;
-      api.get(`/${targetTenant}/bookings/busy-slots`, { 
-        params: { staffId: rescheduleData.staffId, date: selDate } 
-      }).then(res => setBusySlots(res.data.busy || []));
+      api.get(`/${targetTenant}/bookings/busy-slots`, { params: { staffId: rescheduleData.staffId, date: selDate } }).then(res => setBusySlots(res.data.busy || []));
     }
   }, [selDate, rescheduleData, tenantPath]);
 
@@ -63,19 +59,12 @@ export default function MyBookingsPage() {
     const day = new Date(selDate).getDay();
     const h = businessHours.find(bh => bh.dayOfWeek === day);
     if (!h || h.isClosed) return [];
-    
     const res = [];
     let cur = new Date(`${selDate}T${h.openTime}`);
     const end = new Date(`${selDate}T${h.closeTime}`);
-    
     while (cur < end) {
       const t = cur.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-      const isBusy = busySlots.some(b => {
-        const st = new Date(b.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-        const en = new Date(b.end).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-        return t >= st && t < en;
-      });
-      if (!isBusy) res.push(t);
+      if (!busySlots.some(b => t >= new Date(b.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) && t < new Date(b.end).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }))) res.push(t);
       cur.setMinutes(cur.getMinutes() + 30);
     }
     return res;
@@ -87,71 +76,44 @@ export default function MyBookingsPage() {
       const targetTenant = tenantPath || rescheduleData.tenantPath;
       const st = `${selDate}T${selTime}:00`;
       const en = new Date(new Date(st).getTime() + (rescheduleData.durationMinutes || 60) * 60000).toISOString();
-      
       await api.patch(`/${targetTenant}/bookings/${rescheduleData.id}/reschedule`, { newStartTime: st, newEndTime: en });
-      toast.success("เลื่อนคิวสำเร็จ!");
-      setRescheduleData(null);
-      fetchBookings(); 
-    } catch (err: any) { toast.error(err.response?.data?.error || "ไม่สามารถเลื่อนคิวได้"); } finally { setIsRescheduling(false); }
+      toast.success("สำเร็จ!"); setRescheduleData(null); fetchBookings();
+    } catch { toast.error("ล้มเหลว"); } finally { setIsRescheduling(false); }
   };
 
   if (loading) return <div className="h-screen flex items-center justify-center font-black animate-pulse">Loading Records...</div>;
 
   return (
-    <div className="min-h-screen bg-bg font-sans pb-32 No Italic relative">
+    <div className="min-h-screen bg-bg font-sans pb-32 No Italic">
       <CustomerNavbar />
       <div className="max-w-5xl mx-auto px-6 pt-32 space-y-12">
-        <header className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-            <div className="space-y-2"><h1 className="text-5xl font-black text-primary tracking-tighter uppercase leading-none">History</h1></div>
-            <div className="bg-white px-10 py-5 rounded-card border shadow-sm text-center"><p className="text-[9px] font-black text-muted uppercase tracking-widest mb-1">Total Sessions</p><p className="text-3xl font-black text-primary tracking-tighter">{bookings.length}</p></div>
-          </div>
-        </header>
-
+        <header className="flex justify-between items-end"><h1 className="text-5xl font-black text-primary uppercase">History</h1></header>
         <div className="grid gap-8">
-          {bookings.length > 0 ? bookings.map((b: any) => (
-            <div key={b.id} className="card-cozy group relative overflow-hidden flex flex-col md:flex-row items-stretch p-0!">
-              <div className={`hidden md:block w-2 absolute left-0 top-0 bottom-0 ${getStatusColor(b.status)} opacity-60`} />
-              <div className="flex-1 p-10 space-y-10">
-                <div className="flex justify-between items-center"><StatusBadge status={b.status} /><span className="text-[9px] font-black text-stone-300 uppercase tracking-widest leading-none">ID: #{b.id}</span></div>
-                <div className="space-y-3"><h3 className="text-3xl font-black text-primary uppercase leading-none tracking-tight">{b.serviceName}</h3><div className="flex items-center gap-4"><p className="text-[11px] font-black text-muted uppercase tracking-[0.2em]">{b.staffName || 'Service Provider'}</p></div></div>
-                <div className="grid grid-cols-2 gap-8 pt-8 border-t border-stone-50"><div className="space-y-1"><p className="text-[9px] font-black text-accent uppercase tracking-widest">Date</p><p className="text-sm font-black text-primary flex items-center gap-2"><Calendar size={16} className="text-stone-300" /> {new Date(b.startTime).toLocaleDateString('th-TH')}</p></div><div className="space-y-1"><p className="text-[9px] font-black text-accent uppercase tracking-widest">Time Slot</p><p className="text-sm font-black text-primary flex items-center gap-2"><Clock size={16} className="text-stone-300" /> {new Date(b.startTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</p></div></div>
+          {bookings.map((b: any) => (
+            <div key={b.id} className="card-cozy flex flex-col md:flex-row p-0! overflow-hidden bg-white border border-stone-100">
+              <div className="flex-1 p-10 space-y-6">
+                <StatusBadge status={b.status} />
+                <h3 className="text-3xl font-black text-primary uppercase">{b.serviceName}</h3>
+                <div className="grid grid-cols-2 gap-8 border-t pt-6"><p className="text-sm font-black flex items-center gap-2"><Calendar size={16}/> {new Date(b.startTime).toLocaleDateString('th-TH')}</p><p className="text-sm font-black flex items-center gap-2"><Clock size={16}/> {new Date(b.startTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</p></div>
               </div>
-              <div className="bg-stone-50/50 md:w-72 p-10 flex flex-col justify-between items-center md:items-end border-t md:border-l border-stone-100">
-                 <div className="text-center md:text-right"><p className="text-[9px] font-black text-muted uppercase tracking-widest mb-1">Total Fee</p><p className="text-4xl font-black text-primary tracking-tighter">฿{b.price}</p></div>
-                 <div className="w-full space-y-3">
-                   {b.status === 'pending' && <button onClick={() => navigate(`/${tenantPath || b.tenantPath}/pay/${b.id}`)} className="w-full btn-boutique-primary py-4 text-[10px] cursor-pointer shadow-premium"><CreditCard size={16} /> Pay Now</button>}
-                   {(b.status === 'pending' || b.status === 'confirmed') && (
-                     <><button onClick={() => openReschedule(b)} className="w-full py-4 bg-white text-primary border hover:border-accent hover:text-accent rounded-2xl font-black text-[10px] uppercase cursor-pointer shadow-sm flex items-center justify-center gap-2"><RefreshCw size={14} /> Reschedule</button><button onClick={() => handleCancel(b.id, b.tenantPath)} className="w-full py-4 text-muted/60 hover:text-rose-500 font-black text-[9px] uppercase cursor-pointer"><XCircle size={16} className="inline mr-1" /> Cancel</button></>
-                   )}
+              <div className="bg-stone-50 md:w-72 p-10 flex flex-col justify-between items-end border-t md:border-l">
+                 <p className="text-4xl font-black text-primary">฿{Number(b.price).toLocaleString()}</p>
+                 <div className="w-full space-y-2">
+                   {b.status === 'pending' && <button onClick={() => navigate(`/${tenantPath || b.tenantPath}/pay/${b.id}`)} className="w-full btn-boutique-primary py-4 text-xs cursor-pointer shadow-premium"><CreditCard size={16} /> Pay Now</button>}
+                   {(b.status === 'pending' || b.status === 'confirmed') && <><button onClick={() => openReschedule(b)} className="w-full py-4 bg-white border rounded-2xl font-black text-[10px] uppercase cursor-pointer hover:bg-stone-100 shadow-sm"><RefreshCw size={14} className="inline mr-2" /> Reschedule</button><button onClick={() => handleCancel(b.id, b.tenantPath)} className="w-full py-4 text-rose-500 font-black text-[10px] uppercase cursor-pointer"><XCircle size={14} className="inline mr-2" /> Cancel</button></>}
                  </div>
               </div>
             </div>
-          )) : (
-            <div className="py-32 text-center bg-stone-50 rounded-[48px] border-2 border-dashed border-stone-100"><ShoppingBag className="mx-auto text-stone-200 mb-4" size={64} /><p className="font-black text-stone-300 uppercase tracking-widest">No history available</p></div>
-          )}
+          ))}
         </div>
       </div>
-
-      {rescheduleData && (
-        <div className="fixed inset-0 z-100 bg-primary/90 backdrop-blur-xl flex items-center justify-center p-6"><div className="bg-white rounded-card w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"><header className="p-8 border-b bg-stone-50 flex justify-between"><h3 className="font-black text-primary text-xl uppercase">Reschedule Booking</h3><button onClick={() => setRescheduleData(null)} className="text-stone-300 hover:text-rose-500 cursor-pointer"><XCircle size={24}/></button></header><div className="p-8 overflow-y-auto space-y-8"><div className="space-y-3"><label className="text-[10px] font-black uppercase text-muted">Select New Date</label><input type="date" min={new Date().toISOString().split('T')[0]} className="input-warm py-4" value={selDate} onChange={e => {setSelDate(e.target.value); setSelTime('');}} /></div><div className="space-y-4"><label className="text-[10px] font-black uppercase text-muted">Available Time Slots</label>{slots.length > 0 ? <div className="grid grid-cols-3 gap-3">{slots.map(t => (<button key={t} onClick={() => setSelTime(t)} className={`py-4 rounded-2xl text-[11px] font-black border-2 cursor-pointer ${selTime === t ? 'bg-accent border-accent text-white' : 'bg-stone-50 text-primary hover:border-stone-200'}`}>{t}</button>))}</div> : <div className="py-12 text-center bg-stone-50 rounded-3xl border border-dashed"><p className="text-[10px] font-black text-stone-300 uppercase">No slots available</p></div>}</div></div><footer className="p-6 bg-stone-50 border-t flex gap-4"><button onClick={() => setRescheduleData(null)} className="px-8 py-4 rounded-2xl font-black text-[10px] uppercase text-stone-400 hover:bg-stone-200 cursor-pointer">Cancel</button><button disabled={!selTime || isRescheduling} onClick={confirmReschedule} className="flex-1 btn-boutique-primary py-4 text-[11px] cursor-pointer">{isRescheduling ? <Loader2 className="animate-spin mx-auto"/> : "Confirm New Slot"}</button></footer></div></div>
-      )}
+      {rescheduleData && <div className="fixed inset-0 z-100 bg-primary/90 backdrop-blur-xl flex items-center justify-center p-6"><div className="bg-white rounded-card w-full max-w-xl p-10 space-y-10 animate-in zoom-in"><header className="flex justify-between items-center"><h3 className="font-black text-2xl uppercase">Reschedule</h3><button onClick={() => setRescheduleData(null)}><XCircle /></button></header><input type="date" min={new Date().toISOString().split('T')[0]} className="input-warm" value={selDate} onChange={e => {setSelDate(e.target.value); setSelTime('');}} /><div className="grid grid-cols-3 gap-2">{slots.map(t => (<button key={t} onClick={() => setSelTime(t)} className={`py-3 rounded-xl font-black text-xs ${selTime === t ? 'bg-accent text-white' : 'bg-stone-100 text-primary'}`}>{t}</button>))}</div><button disabled={!selTime || isRescheduling} onClick={confirmReschedule} className="btn-boutique-primary w-full py-5">{isRescheduling ? <Loader2 className="animate-spin mx-auto"/> : "Confirm New Slot"}</button></div></div>}
     </div>
   );
 }
 
 function StatusBadge({ status }: any) {
-  const c: any = {
-    pending: { label: 'รอชำระเงิน', icon: <Timer size={12}/>, color: 'bg-orange-50 text-orange-600 border-orange-100' },
-    confirmed: { label: 'ยืนยันแล้ว', icon: <CheckCircle2 size={12}/>, color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
-    completed: { label: 'เสร็จสิ้น', icon: <CheckCircle2 size={12}/>, color: 'bg-blue-50 text-blue-600 border-blue-100' },
-    canceled: { label: 'ยกเลิกแล้ว', icon: <XCircle size={12}/>, color: 'bg-rose-50 text-rose-500 border-rose-100' }
-  };
-  const { label, icon, color } = c[status] || c.pending;
-  return <div className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border flex items-center gap-2 ${color}`}>{icon} {label}</div>;
-}
-
-function getStatusColor(s: string) {
-  const c: any = { pending: 'bg-orange-400', confirmed: 'bg-emerald-400', completed: 'bg-blue-400', canceled: 'bg-rose-400' };
-  return c[s] || 'bg-stone-400';
+  const c: any = { pending: { label: 'รอชำระเงิน', color: 'bg-orange-50 text-orange-600' }, confirmed: { label: 'ืนยืนแล้ว', color: 'bg-emerald-50 text-emerald-600' }, completed: { label: 'เสร็จสิ้น', color: 'bg-blue-50 text-blue-600' }, canceled: { label: 'ยกเลิกแล้ว', color: 'bg-rose-50 text-rose-500' } };
+  const s = c[status] || c.pending;
+  return <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border w-fit ${s.color}`}>{s.label}</div>;
 }

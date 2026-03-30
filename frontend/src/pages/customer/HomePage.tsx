@@ -12,8 +12,11 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // API ตัวนี้จะวิ่งไปที่ /api/auth/shops ปกติครับ ไม่ต้องห่วง axios จัดให้แล้ว
-    api.get('/auth/shops').then(res => setShops(res.data.shops)).catch(console.error).finally(() => setLoading(false));
+    // axios.ts จะเติม /api ให้เอง เป็น /api/auth/shops
+    api.get('/auth/shops')
+      .then(res => setShops(res.data.shops || []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = shops.filter((s: any) => s.name.toLowerCase().includes(searchQuery.toLowerCase()));

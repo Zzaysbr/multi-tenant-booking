@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import CustomerNavbar from '../../components/layouts/CustomerNavbar';
-import { MapPin, Phone, Clock, ArrowRight, Sparkles, Star, Package, Loader2 } from 'lucide-react';
+import { MapPin, Phone, Clock, ArrowRight, Sparkles, Package} from 'lucide-react';
 import { getFullImageUrl } from '../../utils/image';
 
 export default function ShopPage() {

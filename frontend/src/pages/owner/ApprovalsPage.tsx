@@ -1,4 +1,3 @@
-// src/pages/owner/ApprovalsPage.tsx
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
@@ -15,8 +14,9 @@ export default function ApprovalsPage() {
   const fetchApprovals = async () => {
     if (!user?.tenantPath) return;
     try {
-      const res = await api.get(`/api/${user.tenantPath}/owner/approvals`);
-      setApprovals(res.data.approvals || []);
+      const res = await api.get(`/${user.tenantPath}/owner/bookings`);
+      const pending = (res.data.bookings || []).filter((b: any) => b.status === 'pending');
+      setApprovals(pending);
     } finally { setLoading(false); }
   };
 
@@ -24,10 +24,19 @@ export default function ApprovalsPage() {
 
   const handleApprove = async (id: number) => {
     try {
-      await api.patch(`/api/${user?.tenantPath}/owner/approve/${id}`);
+      await api.patch(`/${user?.tenantPath}/owner/bookings/${id}/status`, { status: 'confirmed' });
       toast.success("ยืนยันคิวเรียบร้อย!", { description: "ส่งการแจ้งเตือนเรียบร้อยแล้วครับ" });
       fetchApprovals();
+      setSelectedSlip(null);
     } catch { toast.error("เกิดข้อผิดพลาดในการอนุมัติ"); }
+  };
+
+  const handleReject = async (id: number) => {
+    try {
+      await api.patch(`/${user?.tenantPath}/owner/bookings/${id}/status`, { status: 'canceled' });
+      toast.success("ปฏิเสธคิวเรียบร้อย");
+      fetchApprovals();
+    } catch { toast.error("เกิดข้อผิดพลาดในการปฏิเสธ"); }
   };
 
   if (loading) return (
@@ -39,7 +48,6 @@ export default function ApprovalsPage() {
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 font-sans No Italic pb-20">
-      
       <header className="space-y-2">
         <h1 className="text-4xl font-black text-primary tracking-tighter uppercase leading-none">Approvals Hub</h1>
         <p className="text-[10px] font-black text-primary/40 uppercase tracking-[0.4em]">Review payments and secure time slots</p>
@@ -47,20 +55,17 @@ export default function ApprovalsPage() {
 
       <div className="grid gap-6">
         {approvals.map((item) => (
-          <div key={item.bookingId} className="card-cozy p-0 overflow-hidden border-stone-100 flex flex-col lg:flex-row hover:border-accent/30 transition-all shadow-xl shadow-black/5">
-            
-            {/* 📝 Booking Details */}
+          <div key={item.id} className="card-cozy p-0 overflow-hidden border-stone-100 flex flex-col lg:flex-row hover:border-accent/30 transition-all shadow-xl shadow-black/5">
             <div className="flex-1 p-8 space-y-6">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-5">
                   <div className="w-14 h-14 bg-secondary rounded-2xl flex items-center justify-center text-primary border border-stone-50"><User size={24}/></div>
                   <div>
-                    <h3 className="text-xl font-black text-primary uppercase tracking-tight leading-none mb-1">{item.customerName}</h3>
-                    <p className="text-[10px] font-black text-muted uppercase tracking-[0.2em]">Ticket #{item.bookingId}</p>
+                    <h3 className="text-xl font-black text-primary uppercase tracking-tight leading-none mb-1">{item.customerName || item.guestName}</h3>
+                    <p className="text-[10px] font-black text-muted uppercase tracking-[0.2em]">Ticket #{item.id}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                   <p className="text-2xl font-black text-primary leading-none mb-1">฿{item.price}</p>
                    <p className="text-[9px] font-black text-accent uppercase tracking-widest">{item.serviceName}</p>
                 </div>
               </div>
@@ -75,11 +80,10 @@ export default function ApprovalsPage() {
               </div>
             </div>
 
-            {/* 📸 Slip Action */}
             <div className="w-full lg:w-80 bg-stone-50/50 p-8 flex flex-col justify-center items-center border-t lg:border-t-0 lg:border-l border-stone-100">
               {item.slipUrl ? (
                 <div className="relative group cursor-pointer w-32 h-44" onClick={() => setSelectedSlip(item.slipUrl)}>
-                  <img src={getFullImageUrl(item.slipUrl)} alt="slip" className="w-full h-full object-cover rounded-2xl shadow-lg group-hover:brightness-50 transition-all border-4 border-white" />
+                  <img src={getFullImageUrl(item.slipUrl)!} alt="slip" className="w-full h-full object-cover rounded-2xl shadow-lg group-hover:brightness-50 transition-all border-4 border-white" />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Eye className="text-white" />
                   </div>
@@ -92,10 +96,10 @@ export default function ApprovalsPage() {
               )}
 
               <div className="flex gap-3 mt-8 w-full">
-                <button onClick={() => handleApprove(item.bookingId)} className="btn-boutique-primary flex-1 py-4 text-[11px] cursor-pointer">
+                <button onClick={() => handleApprove(item.id)} className="btn-boutique-primary flex-1 py-4 text-[11px] cursor-pointer">
                   <Check size={16} /> Approve
                 </button>
-                <button className="p-4 bg-white border border-stone-200 rounded-2xl text-stone-300 hover:text-rose-500 hover:bg-rose-50 transition-all cursor-pointer">
+                <button onClick={() => handleReject(item.id)} className="p-4 bg-white border border-stone-200 rounded-2xl text-stone-300 hover:text-rose-500 hover:bg-rose-50 transition-all cursor-pointer">
                   <X size={16} />
                 </button>
               </div>
@@ -110,10 +114,9 @@ export default function ApprovalsPage() {
         )}
       </div>
 
-      {/* 🖼️ Modal Slip Viewer */}
       {selectedSlip && (
         <div className="fixed inset-0 z-100 bg-primary/90 backdrop-blur-xl flex items-center justify-center p-10 animate-in fade-in zoom-in duration-300 cursor-pointer" onClick={() => setSelectedSlip(null)}>
-          <img src={getFullImageUrl(selectedSlip)} className="max-h-full max-w-lg rounded-4xl shadow-2xl border-8 border-white" />
+          <img src={getFullImageUrl(selectedSlip)!} className="max-h-full max-w-lg rounded-4xl shadow-2xl border-8 border-white" />
         </div>
       )}
     </div>

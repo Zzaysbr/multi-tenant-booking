@@ -24,7 +24,7 @@ export default function BookingPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        // ✅ เติม /api แล้วพ่วงชื่อร้าน
+        // ✅ ปรับ Path ให้สะอาด
         const [i, c] = await Promise.all([
           api.get(`/${tenantPath}/bookings/init`), 
           api.get(`/${tenantPath}/config`)
@@ -63,13 +63,15 @@ export default function BookingPage() {
   }, [selDate, businessHours, busySlots]);
 
   const confirm = async () => {
-    if(!selTime) return toast.error("กรุณาเลือกเวลา");
+    if(!selTime || !selService || !selStaff) return toast.error("กรุณาเลือกข้อมูลให้ครบ");
     setSubmitting(true);
     try {
       const st = `${selDate}T${selTime}:00`;
       const en = new Date(new Date(st).getTime() + (selService.durationMinutes || 60) * 60000).toISOString();
-      const res = await api.post(`/${tenantPath}/bookings`, { serviceId: selService.id, staffId: selStaff.id, startTime: st, endTime: en });
-      toast.success("Success!"); navigate(`/${tenantPath}/pay/${res.data.booking.id}`);
+      const res = await api.post(`/${tenantPath}/bookings`, { 
+        serviceId: selService.id, staffId: selStaff.id, startTime: st, endTime: en 
+      });
+      toast.success("Reservation Success!"); navigate(`/${tenantPath}/pay/${res.data.booking.id}`);
     } finally { setSubmitting(false); }
   };
 
@@ -79,8 +81,8 @@ export default function BookingPage() {
     <div className="min-h-screen bg-bg font-sans pb-44 No Italic">
       <CustomerNavbar />
       <header className="max-w-5xl mx-auto pt-32 px-6 flex items-center justify-between">
-         <button onClick={() => navigate(-1)} className="p-4 bg-white rounded-2xl border hover:bg-stone-50 transition-all cursor-pointer"><ArrowLeft size={20}/></button>
-         <div className="text-center"><p className="text-[10px] font-black text-accent uppercase tracking-[0.4em] mb-1">Reservation Portal</p><h1 className="text-3xl font-black text-primary uppercase tracking-tighter">{shopName}</h1></div>
+         <button onClick={() => navigate(-1)} className="p-4 bg-white rounded-2xl border hover:bg-stone-50 cursor-pointer"><ArrowLeft size={20}/></button>
+         <div className="text-center"><p className="text-[10px] font-black text-accent uppercase tracking-[0.4em] mb-1">Reservation Portal</p><h1 className="text-3xl font-black text-primary uppercase">{shopName}</h1></div>
          <div className="w-14" />
       </header>
 
@@ -112,7 +114,7 @@ export default function BookingPage() {
               <div className="space-y-3"><label className="text-[10px] font-black uppercase tracking-widest text-muted px-2">Select Date</label><input type="date" min={new Date().toISOString().split('T')[0]} className="input-warm py-5" value={selDate} onChange={e => setSelDate(e.target.value)} /></div>
               <div className="space-y-4"><label className="text-[10px] font-black uppercase tracking-widest text-muted px-2">Available Times</label>
                 {selStaff ? <div className="grid grid-cols-3 gap-2">{slots.map(t => (
-                  <button key={t} onClick={() => setSelTime(t)} className={`py-3.5 rounded-xl text-[11px] font-black transition-all border-2 cursor-pointer ${selTime === t ? 'bg-accent border-accent text-white shadow-lg' : 'bg-stone-50 border-transparent text-primary hover:border-stone-200'}`}>{t}</button>
+                  <button key={t} onClick={() => setSelTime(t)} className={`py-3.5 rounded-xl text-[11px] font-black transition-all border-2 cursor-pointer ${selTime === t ? 'bg-accent border-accent text-white' : 'bg-stone-50 border-transparent text-primary'}`}>{t}</button>
                 ))}</div> : <div className="py-12 text-center bg-stone-50 rounded-2xl border border-dashed border-stone-200"><p className="text-[10px] font-black text-stone-300 uppercase">Select provider first</p></div>}
               </div>
             </div>
@@ -123,7 +125,7 @@ export default function BookingPage() {
       <div className="fixed bottom-0 left-0 right-0 p-6 z-50">
         <div className="max-w-5xl mx-auto bg-primary rounded-card p-6 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10 backdrop-blur-xl">
            <div className="flex items-center gap-6"><div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-accent"><Sparkles size={24}/></div><div><p className="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-1">Total Amount</p><p className="text-3xl font-black text-white tracking-tighter">฿{Number(selService?.price || 0).toLocaleString()}</p></div></div>
-           <button disabled={!selTime || submitting} onClick={confirm} className="w-full md:w-auto px-16 py-6 bg-accent text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-white hover:text-primary transition-all disabled:opacity-20 cursor-pointer">{submitting ? <Loader2 className="animate-spin" /> : "Confirm Reservation"}</button>
+           <button disabled={!selTime || submitting} onClick={confirm} className="w-full md:w-auto px-16 py-6 bg-accent text-white rounded-3xl font-black text-xs shadow-xl cursor-pointer">{submitting ? <Loader2 className="animate-spin" /> : "Confirm Reservation"}</button>
         </div>
       </div>
     </div>

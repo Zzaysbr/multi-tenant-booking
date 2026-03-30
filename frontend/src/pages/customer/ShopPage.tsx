@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import CustomerNavbar from '../../components/layouts/CustomerNavbar';
-import { MapPin, Phone, Clock, ArrowRight, Sparkles, Package } from 'lucide-react';
+import { MapPin, Phone, Clock, ArrowRight, Sparkles, Star, Package, Loader2 } from 'lucide-react';
 import { getFullImageUrl } from '../../utils/image';
 
 export default function ShopPage() {
@@ -15,7 +15,7 @@ export default function ShopPage() {
   useEffect(() => {
     const fetchShopData = async () => {
       try {
-        // ✅ ตัด /api ออก เพราะ axios พ่วงให้แล้ว จะเหลือแค่ /tenantPath/config
+        // ✅ ลบ /api ออก เพราะใน axios มี baseURL /api ให้อยู่แล้ว
         const [c, i] = await Promise.all([
           api.get(`/${tenantPath}/config`), 
           api.get(`/${tenantPath}/bookings/init`)
@@ -23,7 +23,7 @@ export default function ShopPage() {
         setShop(c.data.config); 
         setServices(i.data.services || []);
       } catch (err) {
-        console.error(err);
+        console.error("Shop Load Error:", err);
       } finally { setLoading(false); }
     };
     fetchShopData();
@@ -53,7 +53,7 @@ export default function ShopPage() {
                <span className="text-[10px] font-black uppercase tracking-[0.5em] text-accent flex items-center gap-2"><Sparkles size={16} /> Exceptional Offerings</span>
                <h2 className="text-4xl font-black text-primary tracking-tighter uppercase">Our Services</h2>
             </div>
-            <button onClick={() => navigate(`/${tenantPath}/book`)} className="btn-boutique-primary shadow-premium">Book Now <ArrowRight size={16}/></button>
+            <button onClick={() => navigate(`/${tenantPath}/book`)} className="btn-boutique-primary shadow-premium cursor-pointer">Book Now <ArrowRight size={16}/></button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {services.map((s: any) => (

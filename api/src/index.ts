@@ -18,15 +18,14 @@ import { businessHoursModule } from "./modules/business_hours";
 import { adminModule } from "./modules/admin";
 
 const app = new Elysia()
-  // --- 🛡️ 1. Rate Limit (OWASP A07 - Anti Brute Force) ---
+  // --- 🛡️ 1. Rate Limit (OWASP A07) ---
   .use(rateLimit({
-    duration: 60000, // 1 นาที
-    max: 100, // 100 ครั้งต่อนาที
-    // ✅ ใช้ 'error' แทน 'errorResponse' เพื่อให้ตรงตาม Type ล่าสุดของปลั๊กอิน
-    errorResponse: "คุณทำรายการบ่อยเกินไป กรุณาลองใหม่ในอีก 1 นาที"
+    duration: 60000,
+    max: 100,
+    errorResponse: "คุณทำรายการบ่อยเกินไป กรุณาลองใหม่ในอีก 1 นาที" 
   }))
 
-  // --- 🛡️ 2. Global Security Setup (OWASP A05) ---s
+  // --- 🛡️ 2. Global Security Setup (CORS Fix) ---
   .use(cors({
     origin: (request) => {
       const origin = request.headers.get('origin');
@@ -34,8 +33,7 @@ const app = new Elysia()
         'http://localhost:5173', 
         process.env.FRONTEND_URL
       ];
-      
-      // ✅ ถ้าเป็น localhost หรือตรงกับ FRONTEND_URL หรือลงท้ายด้วย .vercel.app ให้ผ่านได้เลย
+      // ✅ อนุญาตทุุก Domain ที่ลงท้ายด้วย .vercel.app เพื่อแก้ปัญหา Preview URL
       if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         return true;
       }
@@ -58,34 +56,28 @@ const app = new Elysia()
     }
     if (code === 'NOT_FOUND') {
       set.status = 404;
-      return { error: "ไม่พบหน้าที่คุณต้องการ (404)" };
+      return { error: "ไม่พบข้อมูลที่ต้องการ (404)" };
     }
     
     set.status = 500;
-    return { error: "Internal Server Error" }; // ปิดบัง Stack Trace เพื่อความปลอดภัย
+    return { error: "Internal Server Error" }; 
   })
   
   .use(staticPlugin({ assets: 'public', prefix: '' }))
 
-  // --- 🔑 4. Global Routes (Root Level) ---
-  // สำหรับ Google OAuth Redirect
+  // --- 🔑 4. Global Routes ---
   .use(authModule)
 
-  // --- 🌐 5. API GROUP (แก้ปัญหา 404 Conflict) ---
   .group("/api", (api) => api
     .use(authModule)  
     .use(userRoutes)  
     .use(adminModule)
 
-    // --- 🏪 6. Tenant Specific Routes (OWASP A01 Isolation) ---
+    // --- 🏪 5. Tenant Specific Routes (OWASP A01 Isolation) ---
     .group("/:tenantPath", (apiGroup) => 
       apiGroup
         .use(tenantAuthMiddleware)
-        .get("/config", async ({ currentTenant, set }: any) => {
-          if (!currentTenant) { 
-            set.status = 404; 
-            return { error: "ไม่พบร้านค้านี้ในระบบ" }; 
-          }
+        .get("/config", async ({ currentTenant }: any) => {
           return { config: currentTenant };
         })
         .use(businessHoursModule)
@@ -98,4 +90,4 @@ const app = new Elysia()
   
   .listen(process.env.PORT || 3000);
 
-console.log(`🦊 [Security Armed] Cozy Backend online at port ${app.server?.port}`);
+console.log(`🦊 Cozy Backend online at port ${app.server?.port}`);

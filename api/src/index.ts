@@ -32,11 +32,11 @@ const app = new Elysia()
       const origin = request.headers.get('origin');
       const allowedOrigins = [
         'http://localhost:5173', 
-        process.env.FRONTEND_URL // ตัวนี้ต้องตรงกับ URL ของ Vercel ที่ตั้งใน Render Dashboard
+        process.env.FRONTEND_URL
       ];
       
-      // ถ้าไม่มี origin (เช่นเรียกจากเครื่องมือทดสอบ) หรืออยู่ในลิสต์ที่อนุญาต
-      if (!origin || allowedOrigins.includes(origin)) {
+      // ✅ ถ้าเป็น localhost หรือตรงกับ FRONTEND_URL หรือลงท้ายด้วย .vercel.app ให้ผ่านได้เลย
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         return true;
       }
       return false;
